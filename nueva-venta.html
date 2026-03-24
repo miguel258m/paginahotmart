@@ -328,7 +328,7 @@ function showToast(buyer, product, amount, method) {
   const t = document.createElement('div');
   t.className = 'toast';
   t.innerHTML = `
-    <div class="toast-title">✓ Venta registrada</div>
+    <div class="toast-title">✓ Venta realizada</div>
     <div class="toast-body">${escHtml(buyer)} · ${escHtml(product)}</div>
     <div class="toast-amount">+ USD$ ${amount.toFixed(2).replace('.',',')}</div>
     <div class="toast-bar"></div>`;
