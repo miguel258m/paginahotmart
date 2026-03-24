@@ -821,18 +821,23 @@ const FB_URL = 'https://pagina-hotmart-default-rtdb.firebaseio.com/ventas.json';
 let lastTs = 0;
 
 function fetchNewSales() {
-  fetch(`${FB_URL}?orderBy="ts"&startAt=${lastTs}&limitToLast=10`)
+  fetch(`${FB_URL}?orderBy="ts"&startAt=${lastTs}`)
     .then(r => r.json())
     .then(data => {
       console.log('Firebase data:', data);
-      if (!data) return;
-      const newSales = Object.values(data).filter(d => d.ts > lastTs);
-      console.log('New sales found:', newSales.length);
+      if (!data) {
+        console.log('No data from Firebase');
+        return;
+      }
+      const allSales = Object.values(data);
+      console.log('Total sales in response:', allSales.length);
+      const newSales = allSales.filter(d => d.ts > lastTs);
+      console.log('New sales found:', newSales.length, 'lastTs:', lastTs);
       newSales
         .sort((a,b) => a.ts - b.ts)
         .forEach(d => {
           console.log('Adding sale:', d);
-          lastTs = Math.max(lastTs, d.ts);
+          lastTs = d.ts + 1;
           const amt = parseFloat(d.amount);
           addRowToTable(d);
           updateTotal(amt);
