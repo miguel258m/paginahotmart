@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Hotmart – Nueva Venta</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;background:#f4f4f6;min-height:100vh;font-size:13px;}
+
+/* ── Topbar ── */
+.topbar{height:54px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;padding:0 24px;gap:12px;}
+.hotmart-logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.hotmart-logo span{font-size:21px;font-weight:800;color:#1b3a4b;letter-spacing:-.4px;}
+.logo-img-wrap{width:36px;height:36px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.logo-placeholder{width:36px;height:36px;border-radius:50%;background:#fff3ee;border:2px dashed #E8380D;display:flex;align-items:center;justify-content:center;font-size:8px;color:#E8380D;font-weight:600;cursor:pointer;}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.online-dot{width:8px;height:8px;border-radius:50%;background:#059669;animation:pulse-dot 2s infinite;}
+.online-label{font-size:11px;color:#059669;font-weight:600;}
+@keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:.35;}}
+
+/* ── Page wrapper ── */
+.wrap{max-width:700px;margin:0 auto;padding:32px 24px 60px;}
+
+/* ── Header ── */
+.page-title{font-size:22px;font-weight:800;color:#111827;letter-spacing:-.4px;}
+.page-sub{font-size:13px;color:#6b7280;margin-top:5px;}
+
+/* ── Session stats ── */
+.stats-bar{display:flex;align-items:center;gap:18px;margin:16px 0 26px;}
+.stat{font-size:12px;color:#6b7280;}
+.stat strong{color:#111827;font-weight:700;}
+.stat-sep{width:1px;height:14px;background:#e5e7eb;}
+
+/* ── Card ── */
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:28px 32px;}
+.card-title{font-size:14px;font-weight:700;color:#111827;margin-bottom:22px;display:flex;align-items:center;gap:8px;}
+.card-title svg{width:18px;height:18px;stroke:#E8380D;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+/* ── Form ── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.form-row.full{grid-template-columns:1fr;}
+.form-group{display:flex;flex-direction:column;}
+.form-label{font-size:11.5px;font-weight:600;color:#374151;margin-bottom:6px;letter-spacing:.2px;}
+.form-label .req{color:#E8380D;}
+.form-input{width:100%;padding:10px 13px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:13px;font-family:inherit;color:#111827;background:#fafafa;transition:border-color .15s,background .15s,box-shadow .15s;outline:none;}
+.form-input:focus{border-color:#E8380D;background:#fff;box-shadow:0 0 0 3px rgba(232,56,13,.08);}
+.form-input::placeholder{color:#9ca3af;}
+.form-input[readonly]{background:#f3f4f6;color:#6b7280;cursor:default;}
+
+.amount-wrap{position:relative;}
+.amount-prefix{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:700;color:#6b7280;pointer-events:none;}
+.amount-wrap .form-input{padding-left:50px;font-weight:700;font-size:15px;}
+
+.pay-grid{display:flex;gap:10px;flex-wrap:wrap;}
+.pay-opt{display:flex;align-items:center;gap:7px;padding:8px 14px;border:1.5px solid #e5e7eb;border-radius:9px;cursor:pointer;font-size:12px;font-weight:600;color:#374151;background:#fafafa;transition:all .15s;user-select:none;min-width:90px;justify-content:center;}
+.pay-opt:hover{border-color:#E8380D;background:#fff3ee;}
+.pay-opt.selected{border-color:#E8380D;background:#fff3ee;box-shadow:0 0 0 3px rgba(232,56,13,.08);}
+.pay-opt input{display:none;}
+
+.status-preview{display:inline-flex;align-items:center;gap:7px;padding:7px 16px;border-radius:20px;background:#ecfdf5;color:#059669;border:1px solid #6ee7b7;font-size:12px;font-weight:600;}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#059669;animation:pulse-dot 2s infinite;}
+
+.form-actions{display:flex;align-items:center;gap:12px;margin-top:24px;}
+.btn-send{padding:13px 32px;background:linear-gradient(135deg,#E8380D,#ff612b);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s,transform .1s,box-shadow .2s;box-shadow:0 4px 14px rgba(232,56,13,.35);display:flex;align-items:center;gap:8px;}
+.btn-send:hover{opacity:.92;box-shadow:0 6px 20px rgba(232,56,13,.45);}
+.btn-send:active{transform:scale(.98);}
+.btn-send svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;}
+.btn-cancel{padding:13px 20px;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;font-size:13px;font-weight:600;color:#6b7280;cursor:pointer;font-family:inherit;transition:all .15s;}
+.btn-cancel:hover{border-color:#374151;color:#374151;}
+
+/* ── Success state ── */
+.success-panel{display:none;flex-direction:column;align-items:flex-start;}
+.success-panel.show{display:flex;}
+.success-circle{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:2.5px solid #6ee7b7;display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:14px;animation:pop .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes pop{from{transform:scale(0);}to{transform:scale(1);}}
+.success-title{font-size:20px;font-weight:800;color:#111827;margin-bottom:4px;}
+.success-sub{font-size:13px;color:#6b7280;margin-bottom:22px;}
+
+.success-preview{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 20px;width:100%;margin-bottom:20px;}
+.sp-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#9ca3af;margin-bottom:12px;}
+.sp-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.sp-buyer{font-size:14px;font-weight:700;color:#111827;}
+.sp-product{font-size:12px;color:#6b7280;margin-top:2px;}
+.sp-amount{font-size:18px;font-weight:800;color:#059669;flex-shrink:0;}
+.sp-meta{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.sp-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.sp-chip.green{background:#ecfdf5;color:#059669;border:1px solid #6ee7b7;}
+.sp-chip.gray{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;}
+.success-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
+.btn-otra{padding:10px 24px;background:linear-gradient(135deg,#E8380D,#ff612b);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(232,56,13,.3);}
+.btn-otra:hover{opacity:.9;}
+
+/* ── Shake ── */
+@keyframes shake{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-5px);}40%,80%{transform:translateX(5px);}}
+
+/* ── Toast ── */
+.toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:10px;z-index:9999;}
+.toast{background:#1f2937;color:#fff;border-radius:12px;padding:14px 18px;min-width:280px;max-width:340px;box-shadow:0 8px 30px rgba(0,0,0,.25);animation:slide-up .3s ease;overflow:hidden;position:relative;}
+@keyframes slide-up{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.toast-title{font-size:13px;font-weight:700;margin-bottom:3px;}
+.toast-body{font-size:12px;color:#9ca3af;}
+.toast-amount{font-size:17px;font-weight:800;color:#34d399;margin-top:6px;}
+.toast-bar{position:absolute;bottom:0;left:0;height:3px;background:#E8380D;animation:shrink 3.5s linear forwards;}
+@keyframes shrink{from{width:100%;}to{width:0%;}}
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<header class="topbar">
+  <div class="hotmart-logo" onclick="document.getElementById('logoIn').click()" title="Clic para cambiar logo" style="cursor:pointer;">
+    <img id="logoImg" alt="Logo" width="36" height="36" style="object-fit:contain;display:none;border-radius:50%;"/>
+    <div id="logoPh" class="logo-placeholder">LOGO</div>
+    <span>hotmart</span>
+  </div>
+  <input type="file" id="logoIn" accept="image/*" style="display:none;" onchange="uploadLogo(this)"/>
+  <div class="tb-right">
+    <div class="online-dot"></div>
+    <span class="online-label">En vivo</span>
+  </div>
+</header>
+
+<!-- Main -->
+<div class="wrap">
+  <div style="margin-bottom:24px;">
+    <div class="page-title">Registrar venta</div>
+    <div class="page-sub">La venta aparecerá en la página de transacciones en tiempo real.</div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat">Ventas esta sesión: <strong id="sc">0</strong></div>
+    <div class="stat-sep"></div>
+    <div class="stat">Total: <strong id="st">USD$ 0,00</strong></div>
+  </div>
+
+  <!-- Form card -->
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 8v4l3 3"/></svg>
+      Datos de la transacción
+    </div>
+
+    <div id="nvForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Comprador <span class="req">*</span></label>
+          <input class="form-input" id="f-buyer" type="text" placeholder="Nombre completo" autocomplete="off"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Producto <span class="req">*</span></label>
+          <input class="form-input" id="f-product" type="text" placeholder="Ej: En Despertar" autocomplete="off"/>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Vendedor</label>
+          <input class="form-input" id="f-vendor" type="text" placeholder="Nombre del vendedor" value="Alessandro Alan…" autocomplete="off"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Monto (USD) <span class="req">*</span></label>
+          <div class="amount-wrap">
+            <span class="amount-prefix">USD$</span>
+            <input class="form-input" id="f-amount" type="number" min="0.01" step="0.01" placeholder="0.00"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row full" style="margin-bottom:16px;">
+        <div class="form-group">
+          <label class="form-label">Método de pago <span class="req">*</span></label>
+          <div class="pay-grid" id="payOptions">
+            <label class="pay-opt selected" data-val="visa">
+              <input type="radio" name="pay" value="visa" checked/>
+              <span style="font-style:italic;font-weight:800;color:#1a1f71;font-size:13px;">VISA</span>
+            </label>
+            <label class="pay-opt" data-val="mc">
+              <input type="radio" name="pay" value="mc"/>
+              <span style="display:inline-flex;align-items:center;"><span style="width:14px;height:14px;border-radius:50%;background:#eb001b;display:inline-block;"></span><span style="width:14px;height:14px;border-radius:50%;background:#f79e1b;display:inline-block;margin-left:-6px;"></span></span>
+              <span>Mastercard</span>
+            </label>
+            <label class="pay-opt" data-val="pix">
+              <input type="radio" name="pay" value="pix"/>
+              <span style="width:13px;height:13px;background:#32bcad;transform:rotate(45deg);border-radius:2px;display:inline-block;flex-shrink:0;"></span>
+              <span style="color:#00756e;font-weight:700;">Pix</span>
+            </label>
+            <label class="pay-opt" data-val="paypal">
+              <input type="radio" name="pay" value="paypal"/>
+              <span style="font-size:12px;font-weight:800;color:#003087;">Pay<span style="color:#009cde;">Pal</span></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fecha y hora</label>
+          <input class="form-input" id="f-date" type="text" readonly/>
+        </div>
+        <div class="form-group" style="justify-content:flex-end;padding-bottom:2px;">
+          <label class="form-label">Estatus</label>
+          <div style="margin-top:4px;">
+            <div class="status-preview">
+              <span class="status-dot"></span>
+              Aprobada — siempre
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid #f3f4f6;margin:20px 0;"/>
+
+      <div class="form-actions">
+        <button class="btn-send" id="submitBtn">
+          <svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+          Enviar venta
+        </button>
+        <button class="btn-cancel" onclick="resetForm()">Limpiar</button>
+        <span style="margin-left:auto;font-size:11px;color:#9ca3af;">Enter para enviar</span>
+      </div>
+    </div><!-- /nvForm -->
+
+    <!-- Success state -->
+    <div class="success-panel" id="nvSuccess">
+      <div class="success-circle">✓</div>
+      <div class="success-title">¡Venta enviada!</div>
+      <div class="success-sub">La transacción ya aparece en la pantalla principal.</div>
+      <div class="success-preview">
+        <div class="sp-label">Resumen</div>
+        <div class="sp-row">
+          <div>
+            <div class="sp-buyer" id="sp-buyer"></div>
+            <div class="sp-product" id="sp-product"></div>
+          </div>
+          <div class="sp-amount" id="sp-amount"></div>
+        </div>
+        <div class="sp-meta">
+          <span class="sp-chip green" id="sp-method"></span>
+          <span class="sp-chip gray" id="sp-vendor-chip"></span>
+          <span class="sp-chip gray" id="sp-date"></span>
+        </div>
+      </div>
+      <div class="success-actions">
+        <button class="btn-otra" onclick="resetForm()">+ Otra venta</button>
+      </div>
+    </div>
+
+  </div><!-- /card -->
+</div>
+
+<!-- Toast container -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ── Pay labels
+const payLabels = {visa:'Visa',mc:'Mastercard',pix:'Pix',paypal:'PayPal'};
+
+// ── Session counters
+let saleCount = 0, sessionUSD = 0;
+
+// ── Date
+function setTodayDate() {
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2,'0');
+  const mm = String(now.getMonth()+1).padStart(2,'0');
+  const yy = String(now.getFullYear()).slice(-2);
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mi = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('f-date').value = `${dd}/${mm}/${yy} ${hh}:${mi}`;
+}
+setTodayDate();
+
+// ── Payment option click
+document.getElementById('payOptions').addEventListener('click', function(e) {
+  const opt = e.target.closest('.pay-opt');
+  if (!opt) return;
+  document.querySelectorAll('.pay-opt').forEach(o => o.classList.remove('selected'));
+  opt.classList.add('selected');
+});
+
+// ── Logo upload
+function uploadLogo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = document.getElementById('logoImg');
+    const ph  = document.getElementById('logoPh');
+    img.src = e.target.result;
+    img.style.display = 'block';
+    ph.style.display = 'none';
+    localStorage.setItem('hm_logo', e.target.result);
+  };
+  reader.readAsDataURL(file);
+}
+// Restore logo
+window.addEventListener('DOMContentLoaded', function() {
+  const saved = localStorage.getItem('hm_logo');
+  if (saved) {
+    const img = document.getElementById('logoImg');
+    const ph  = document.getElementById('logoPh');
+    img.src = saved; img.style.display = 'block';
+    ph.style.display = 'none';
+  }
+});
+
+// ── Session stats update
+function updateStats(amount) {
+  saleCount++;
+  sessionUSD += amount;
+  document.getElementById('sc').textContent = saleCount;
+  document.getElementById('st').textContent = 'USD$ ' + sessionUSD.toFixed(2).replace('.',',');
+}
+
+// ── Shake
+function shake(id) {
+  const el = document.getElementById(id);
+  el.style.borderColor = '#E8380D';
+  el.style.animation = 'shake .3s ease';
+  setTimeout(() => { el.style.animation = ''; el.style.borderColor = ''; }, 400);
+}
+
+// ── Toast
+function showToast(buyer, product, amount, method) {
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `
+    <div class="toast-title">✓ Venta registrada</div>
+    <div class="toast-body">${escHtml(buyer)} · ${escHtml(product)}</div>
+    <div class="toast-amount">+ USD$ ${amount.toFixed(2).replace('.',',')}</div>
+    <div class="toast-bar"></div>`;
+  wrap.appendChild(t);
+  setTimeout(() => t.remove(), 3800);
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Submit
+function doSubmit() {
+  const buyer     = document.getElementById('f-buyer').value.trim();
+  const product   = document.getElementById('f-product').value.trim();
+  const vendor    = document.getElementById('f-vendor').value.trim() || 'Alessandro Alan…';
+  const amount    = parseFloat(document.getElementById('f-amount').value);
+  const payMethod = document.querySelector('.pay-opt.selected')?.dataset.val || 'visa';
+  const dateStr   = document.getElementById('f-date').value;
+
+  if (!buyer)              { shake('f-buyer');   document.getElementById('f-buyer').focus();   return; }
+  if (!product)            { shake('f-product'); document.getElementById('f-product').focus(); return; }
+  if (!amount || amount<=0){ shake('f-amount');  document.getElementById('f-amount').focus();  return; }
+
+  const saleData = { buyer, product, vendor, amount, payMethod, dateStr, ts: Date.now() };
+
+  // Enviar a Firebase → aparece en la pantalla principal en tiempo real
+  fetch('https://pagina-hotmart-default-rtdb.firebaseio.com/ventas.json', {
+    method: 'POST',
+    body: JSON.stringify(saleData)
+  }).catch(() => {});
+
+  // Update stats & toast
+  updateStats(amount);
+  showToast(buyer, product, amount, payMethod);
+
+  // Show success preview
+  document.getElementById('sp-buyer').textContent      = buyer;
+  document.getElementById('sp-product').textContent    = product;
+  document.getElementById('sp-amount').textContent     = 'USD$ ' + amount.toFixed(2).replace('.',',');
+  document.getElementById('sp-method').textContent     = payLabels[payMethod] || payMethod;
+  document.getElementById('sp-vendor-chip').textContent = vendor;
+  document.getElementById('sp-date').textContent       = dateStr;
+
+  document.getElementById('nvForm').style.display = 'none';
+  document.getElementById('nvSuccess').classList.add('show');
+}
+
+document.getElementById('submitBtn').addEventListener('click', doSubmit);
+
+['f-buyer','f-product','f-vendor','f-amount'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); doSubmit(); }
+  });
+});
+
+// ── Reset
+function resetForm() {
+  document.getElementById('f-buyer').value   = '';
+  document.getElementById('f-product').value = '';
+  document.getElementById('f-amount').value  = '';
+  document.getElementById('f-vendor').value  = 'Alessandro Alan…';
+  document.querySelectorAll('.pay-opt').forEach(o => o.classList.remove('selected'));
+  document.querySelector('.pay-opt[data-val="visa"]').classList.add('selected');
+  document.getElementById('nvForm').style.display = '';
+  document.getElementById('nvSuccess').classList.remove('show');
+  setTodayDate();
+  document.getElementById('f-buyer').focus();
+}
+</script>
+</body>
+</html>
