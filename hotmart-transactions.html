@@ -824,11 +824,14 @@ function fetchNewSales() {
   fetch(`${FB_URL}?orderBy="ts"&startAt=${lastTs}&limitToLast=10`)
     .then(r => r.json())
     .then(data => {
+      console.log('Firebase data:', data);
       if (!data) return;
-      Object.values(data)
-        .filter(d => d.ts > lastTs)
+      const newSales = Object.values(data).filter(d => d.ts > lastTs);
+      console.log('New sales found:', newSales.length);
+      newSales
         .sort((a,b) => a.ts - b.ts)
         .forEach(d => {
+          console.log('Adding sale:', d);
           lastTs = Math.max(lastTs, d.ts);
           const amt = parseFloat(d.amount);
           addRowToTable(d);
@@ -840,6 +843,9 @@ function fetchNewSales() {
     .catch(() => {});
 }
 
+// Fetch immediately on load
+fetchNewSales();
+// Then poll every 3 seconds
 setInterval(fetchNewSales, 3000);
 
 // ══════════════════════════════════════
