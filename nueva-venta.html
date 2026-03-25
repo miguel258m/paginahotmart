@@ -295,16 +295,16 @@ function uploadLogo(input) {
   };
   reader.readAsDataURL(file);
 }
-// Restore logo
-window.addEventListener('DOMContentLoaded', function() {
+// Restore logo (synchronous — DOM is ready at bottom of body)
+(function() {
   const saved = localStorage.getItem('hm_logo');
   if (saved) {
     const img = document.getElementById('logoImg');
     const ph  = document.getElementById('logoPh');
-    img.src = saved; img.style.display = 'block';
-    ph.style.display = 'none';
+    if (img) { img.src = saved; img.style.display = 'block'; }
+    if (ph)  ph.style.display = 'none';
   }
-});
+})();
 
 // ── Session stats update
 function updateStats(amount) {
@@ -355,11 +355,24 @@ function doSubmit() {
 
   const saleData = { buyer, product, vendor, amount, payMethod, dateStr, ts: Date.now() };
 
+  console.log('Sending sale to Firebase:', saleData);
+
   // Enviar a Firebase → aparece en la pantalla principal en tiempo real
   fetch('https://pagina-hotmart-default-rtdb.firebaseio.com/ventas.json', {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(saleData)
-  }).catch(() => {});
+  })
+  .then(response => {
+    console.log('Firebase response status:', response.status);
+    return response.json();
+  })
+  .then(result => {
+    console.log('Firebase result:', result);
+  })
+  .catch(error => {
+    console.error('Firebase error:', error);
+  });
 
   // Update stats & toast
   updateStats(amount);
