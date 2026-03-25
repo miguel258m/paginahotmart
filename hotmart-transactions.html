@@ -767,6 +767,7 @@ function showToast(buyer, product, amount, payMethod) {
     <div class="toast-bar"></div>
   `;
   (container || document.body).appendChild(toast);
+  playNotificationSound();
   setTimeout(() => {
     toast.classList.add('hide');
     setTimeout(() => { if (toast.parentElement) toast.remove(); }, 400);
@@ -1018,25 +1019,21 @@ function showPushNotification(buyer, product, amount) {
 
 function playNotificationSound() {
   try {
-    // Create audio context for notification sound
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator.frequency.value = 800;
-    oscillator.type = 'sine';
-    
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-    
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.5);
-  } catch (error) {
-    console.log('Could not play sound:', error);
-  }
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [[660, 0, 0.12], [880, 0.13, 0.18], [1100, 0.32, 0.28]].forEach(([freq, delay, dur]) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime + delay);
+      gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + delay + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + dur);
+      osc.start(ctx.currentTime + delay);
+      osc.stop(ctx.currentTime + delay + dur);
+    });
+  } catch (e) {}
 }
 
 function showInPageAlert(buyer, product, amount) {
