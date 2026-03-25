@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="theme-color" content="#E8380D"/>
+<link rel="manifest" href="./manifest.json"/>
+<link rel="icon" type="image/png" href="https://i.imgur.com/8YqKQNJ.png"/>
+<title>Hotmart – Transacciones v3</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;background:#f4f4f6;display:flex;height:100vh;overflow:hidden;font-size:13px;}
+
+/* ── Sidebar ── */
+.sidebar{width:56px;background:#fff;border-right:1px solid #e5e7eb;display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:4px;flex-shrink:0;z-index:10;}
+.sb-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#9ca3af;transition:background .15s,color .15s;position:relative;}
+.sb-icon:hover{background:#f3f4f6;color:#374151;}
+.sb-icon.active{color:#E8380D;background:#fff3ee;}
+.sb-icon svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.sb-tooltip{position:absolute;left:52px;background:#1f2937;color:#fff;font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;z-index:999;}
+.sb-icon:hover .sb-tooltip{opacity:1;}
+/* Badge counter on sidebar icon */
+.sb-badge{position:absolute;top:-3px;right:-4px;background:#E8380D;color:#fff;font-size:9px;font-weight:700;line-height:1;border-radius:10px;padding:2px 5px;border:1.5px solid #fff;display:none;min-width:16px;text-align:center;}
+.sb-badge.visible{display:block;}
+@keyframes badge-pop{0%{transform:scale(0);}70%{transform:scale(1.25);}100%{transform:scale(1);}}
+.sb-badge.pop{animation:badge-pop .3s ease forwards;}
+
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+
+/* ── Topbar ── */
+.topbar{height:54px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;padding:0 18px;gap:12px;flex-shrink:0;}
+.topbar-hamburger svg{width:20px;height:20px;stroke:#6b7280;stroke-width:1.8;fill:none;stroke-linecap:round;cursor:pointer;}
+.hotmart-logo{display:flex;align-items:center;gap:9px;text-decoration:none;margin-left:2px;}
+.hotmart-logo span{font-size:21px;font-weight:800;color:#1b3a4b;letter-spacing:-.4px;}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:14px;}
+.tb-btn{position:relative;cursor:pointer;color:#6b7280;line-height:0;padding:4px;}
+.tb-btn svg{width:20px;height:20px;stroke:#6b7280;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.tb-btn:hover svg{stroke:#374151;}
+.notif-badge{position:absolute;top:-2px;right:-4px;background:#E8380D;color:#fff;font-size:9px;font-weight:700;line-height:1;border-radius:10px;padding:2px 4px;border:1.5px solid #fff;}
+.avatar-btn{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#ff8a50,#E8380D);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;cursor:pointer;}
+
+/* ── Pages (views) ── */
+.page{display:none;flex:1;overflow:hidden;flex-direction:column;}
+.page.active{display:flex;}
+
+/* ══════════════════════════════
+   PAGE 1: TRANSACTIONS
+══════════════════════════════ */
+.content{flex:1;overflow-y:auto;padding:20px 24px;}
+.content::-webkit-scrollbar{width:5px;}
+.content::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:4px;}
+
+.summary{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 20px;margin-bottom:16px;display:flex;align-items:center;gap:0;}
+.summary-amount{font-size:22px;font-weight:700;color:#111827;letter-spacing:-.5px;}
+.summary-count{font-size:12px;color:#9ca3af;margin-top:2px;}
+.summary-divider{width:1px;height:36px;background:#e5e7eb;margin:0 20px;}
+.summary-note{color:#6b7280;font-size:13px;}
+.summary-right{margin-left:auto;}
+.btn-modelos{background:#fff;border:1.5px solid #d1d5db;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;color:#374151;cursor:pointer;font-family:inherit;transition:border-color .15s,color .15s;}
+.btn-modelos:hover{border-color:#E8380D;color:#E8380D;}
+
+.table-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:#fafafa;border-bottom:1.5px solid #e5e7eb;}
+th{padding:11px 14px;text-align:left;font-size:11.5px;font-weight:600;color:#6b7280;white-space:nowrap;}
+tbody tr{border-bottom:1px solid #f3f4f6;transition:background .1s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:#fafafa;}
+td{padding:12px 14px;vertical-align:middle;color:#374151;}
+
+.tx-num{font-size:12px;color:#374151;font-weight:500;}
+.lnk{color:#2563eb;text-decoration:none;font-weight:500;}
+.lnk:hover{text-decoration:underline;}
+.dt{color:#6b7280;font-size:12px;}
+.amt{font-weight:600;color:#111827;}
+
+.pay-cell{display:flex;flex-direction:column;gap:3px;align-items:flex-start;}
+.mc-wrap{display:flex;align-items:center;justify-content:center;width:38px;height:22px;border-radius:4px;overflow:hidden;background:#fff;border:1px solid #e5e7eb;}
+.mc-circles{position:relative;width:26px;height:16px;}
+.mc-r{width:16px;height:16px;border-radius:50%;position:absolute;top:0;}
+.mc-r.red{background:#eb001b;left:0;opacity:.95;}
+.mc-r.yel{background:#f79e1b;right:0;opacity:.95;left:10px;}
+.visa-wrap{display:flex;align-items:center;justify-content:center;width:42px;height:22px;border-radius:4px;background:#fff;border:1px solid #e5e7eb;}
+.visa-wrap span{font-size:11px;font-weight:800;color:#1a1f71;font-style:italic;letter-spacing:-.5px;}
+.pix-wrap{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;background:#eafaf8;border:1px solid #b2ece6;border-radius:4px;}
+.pix-wrap span.txt{font-size:10px;font-weight:700;color:#00756e;}
+.pix-icon{width:14px;height:14px;background:#32bcad;transform:rotate(45deg);border-radius:2px;display:inline-block;flex-shrink:0;}
+.paypal-wrap{display:inline-flex;align-items:center;padding:2px 7px;height:22px;border-radius:4px;background:#fff;border:1px solid #e5e7eb;}
+.lock-ico{color:#9ca3af;line-height:0;}
+.lock-ico svg{width:12px;height:12px;stroke:#9ca3af;stroke-width:1.8;fill:none;}
+
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:500;}
+.badge-aprobada{background:#ecfdf5;color:#059669;border:1px solid #6ee7b7;}
+.badge-completa{background:#ecfdf5;color:#059669;border:1px solid #6ee7b7;}
+
+.act-btn{width:28px;height:28px;border:1.5px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#6b7280;font-size:16px;line-height:1;transition:border-color .15s,color .15s;}
+.act-btn:hover{border-color:#E8380D;color:#E8380D;}
+
+.editable{cursor:text;border-radius:5px;padding:3px 5px;margin:-3px -5px;transition:background .15s,box-shadow .15s;outline:none;display:inline-block;min-width:30px;}
+.editable:hover{background:#f0f7ff;}
+.editable:focus{background:#fff;box-shadow:0 0 0 2px #E8380D44;outline:none;}
+
+.status-select{appearance:none;-webkit-appearance:none;border:none;background:transparent;cursor:pointer;font-family:inherit;font-size:11.5px;font-weight:500;padding:3px 18px 3px 10px;border-radius:20px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7280'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 5px center;}
+.status-select:focus{outline:none;box-shadow:0 0 0 2px #E8380D44;border-radius:20px;}
+.sel-aprobada{background:#ecfdf5;color:#059669;border:1px solid #6ee7b7;}
+.sel-completa{background:#ecfdf5;color:#059669;border:1px solid #6ee7b7;}
+.sel-cancelada{background:#fff1f2;color:#e11d48;border:1px solid #fda4af;}
+.sel-pendiente{background:#fffbeb;color:#d97706;border:1px solid #fcd34d;}
+.sel-reembolso{background:#f5f3ff;color:#7c3aed;border:1px solid #c4b5fd;}
+
+/* NEW badge on fresh rows */
+.new-tag{display:inline-block;background:#059669;color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:5px;letter-spacing:.4px;vertical-align:middle;animation:new-fade 3s ease forwards;}
+@keyframes new-fade{0%,70%{opacity:1;}100%{opacity:0;}}
+
+/* ══════════════════════════════
+   PAGE 2: NUEVA VENTA
+══════════════════════════════ */
+.nv-wrap{flex:1;overflow-y:auto;padding:32px 40px;}
+.nv-wrap::-webkit-scrollbar{width:5px;}
+.nv-wrap::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:4px;}
+
+.nv-header{margin-bottom:28px;}
+.nv-breadcrumb{font-size:12px;color:#9ca3af;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.nv-breadcrumb a{color:#9ca3af;text-decoration:none;cursor:pointer;}
+.nv-breadcrumb a:hover{color:#E8380D;}
+.nv-breadcrumb span{color:#374151;}
+.nv-title{font-size:22px;font-weight:800;color:#111827;letter-spacing:-.4px;}
+.nv-subtitle{font-size:13px;color:#6b7280;margin-top:4px;}
+
+/* session stats bar */
+.nv-stats{display:flex;align-items:center;gap:18px;margin-top:12px;}
+.nv-stat{display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7280;}
+.nv-stat-val{font-weight:700;color:#111827;}
+.nv-stat-dot{width:6px;height:6px;border-radius:50%;background:#059669;animation:pulse-dot 2s infinite;}
+@keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+.nv-card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:28px 32px;max-width:640px;}
+.nv-card-title{font-size:14px;font-weight:700;color:#111827;margin-bottom:20px;display:flex;align-items:center;gap:8px;}
+.nv-card-title svg{width:18px;height:18px;stroke:#E8380D;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.form-row.full{grid-template-columns:1fr;}
+.form-group{display:flex;flex-direction:column;}
+.form-label{font-size:11.5px;font-weight:600;color:#374151;margin-bottom:6px;letter-spacing:.2px;}
+.form-label .req{color:#E8380D;}
+.form-input{width:100%;padding:10px 13px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:13px;font-family:inherit;color:#111827;background:#fafafa;transition:border-color .15s,background .15s,box-shadow .15s;outline:none;}
+.form-input:focus{border-color:#E8380D;background:#fff;box-shadow:0 0 0 3px rgba(232,56,13,.08);}
+.form-input::placeholder{color:#9ca3af;}
+.form-input[readonly]{background:#f3f4f6;color:#6b7280;cursor:default;}
+
+.pay-grid{display:flex;gap:10px;flex-wrap:wrap;}
+.pay-opt{display:flex;align-items:center;gap:7px;padding:8px 14px;border:1.5px solid #e5e7eb;border-radius:9px;cursor:pointer;font-size:12px;font-weight:600;color:#374151;background:#fafafa;transition:all .15s;user-select:none;min-width:90px;justify-content:center;}
+.pay-opt:hover{border-color:#E8380D;background:#fff3ee;color:#E8380D;}
+.pay-opt.selected{border-color:#E8380D;background:#fff3ee;color:#E8380D;box-shadow:0 0 0 3px rgba(232,56,13,.08);}
+.pay-opt input{display:none;}
+
+.amount-wrap{position:relative;}
+.amount-prefix{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:700;color:#6b7280;pointer-events:none;}
+.amount-wrap .form-input{padding-left:50px;font-weight:700;font-size:15px;}
+
+.status-preview{display:inline-flex;align-items:center;gap:7px;padding:7px 16px;border-radius:20px;background:#ecfdf5;color:#059669;border:1px solid #6ee7b7;font-size:12px;font-weight:600;}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#059669;animation:pulse-dot 2s infinite;}
+
+.nv-divider{border:none;border-top:1px solid #f3f4f6;margin:20px 0;}
+
+.btn-send{padding:13px 32px;background:linear-gradient(135deg,#E8380D,#ff612b);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s,transform .1s,box-shadow .2s;box-shadow:0 4px 14px rgba(232,56,13,.35);display:flex;align-items:center;gap:8px;}
+.btn-send:hover{opacity:.92;box-shadow:0 6px 20px rgba(232,56,13,.45);}
+.btn-send:active{transform:scale(.98);}
+.btn-send svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;}
+
+.btn-cancel{padding:13px 20px;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;font-size:13px;font-weight:600;color:#6b7280;cursor:pointer;font-family:inherit;transition:all .15s;}
+.btn-cancel:hover{border-color:#374151;color:#374151;}
+
+.form-actions{display:flex;align-items:center;gap:12px;margin-top:24px;}
+.form-hint{font-size:11px;color:#9ca3af;margin-left:auto;}
+
+/* Success confirmation on page 2 */
+.nv-success{display:none;flex-direction:column;align-items:flex-start;padding:0;max-width:640px;}
+.nv-success.show{display:flex;}
+.success-circle{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:2.5px solid #6ee7b7;display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:14px;animation:pop .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes pop{from{transform:scale(0);}to{transform:scale(1);}}
+.success-title{font-size:20px;font-weight:800;color:#111827;margin-bottom:4px;}
+.success-sub{font-size:13px;color:#6b7280;margin-bottom:22px;}
+
+/* Mini preview card inside success */
+.success-preview{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 20px;width:100%;margin-bottom:20px;}
+.sp-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#9ca3af;margin-bottom:12px;}
+.sp-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.sp-buyer{font-size:14px;font-weight:700;color:#111827;}
+.sp-product{font-size:12px;color:#6b7280;margin-top:2px;}
+.sp-amount{font-size:18px;font-weight:800;color:#059669;flex-shrink:0;}
+.sp-meta{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.sp-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.sp-chip.green{background:#ecfdf5;color:#059669;border:1px solid #6ee7b7;}
+.sp-chip.gray{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;}
+
+.btn-otra{padding:10px 24px;background:linear-gradient(135deg,#E8380D,#ff612b);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(232,56,13,.3);}
+.btn-otra:hover{opacity:.9;}
+.btn-go-tx{padding:10px 20px;background:#fff;border:1.5px solid #e5e7eb;border-radius:9px;font-size:13px;font-weight:600;color:#374151;cursor:pointer;font-family:inherit;transition:all .15s;}
+.btn-go-tx:hover{border-color:#374151;}
+.success-actions{display:flex;gap:10px;flex-wrap:wrap;}
+
+/* ── Toast ── */
+#toast-container{position:fixed;bottom:24px;left:72px;display:flex;flex-direction:column-reverse;gap:10px;z-index:99999;pointer-events:none;}
+.toast{pointer-events:auto;background:#1f2937;border-left:4px solid #34d399;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.5);padding:14px 38px 14px 14px;display:flex;align-items:center;gap:12px;min-width:300px;max-width:360px;position:relative;opacity:1;transform:translateX(0);}
+.toast.hide{opacity:0;transition:opacity .35s ease;}
+.toast-icon{width:36px;height:36px;border-radius:50%;background:#ecfdf5;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;}
+.toast-body{flex:1;min-width:0;}
+.toast-tag{font-size:10px;font-weight:700;color:#34d399;text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px;}
+.toast-name{font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.toast-detail{font-size:11.5px;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.toast-amt{font-size:14px;font-weight:800;color:#34d399;flex-shrink:0;}
+.toast-x{position:absolute;top:8px;right:10px;background:none;border:none;cursor:pointer;color:#9ca3af;font-size:15px;padding:2px;}
+.toast-x:hover{color:#374151;}
+.toast-bar{position:absolute;bottom:0;left:0;height:3px;background:#059669;border-radius:0 0 0 12px;width:100%;}
+
+/* edit tooltip */
+.edit-hint{display:none;position:fixed;background:#1f2937;color:#fff;font-size:11px;padding:4px 8px;border-radius:5px;pointer-events:none;z-index:999;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+@keyframes row-flash{0%{background:#f0fdf4;}100%{background:transparent;}}
+
+/* ── Dropdown menu ── */
+.dropdown{position:relative;display:inline-block;}
+.dropdown-menu{display:none;position:absolute;right:0;top:32px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:999;min-width:140px;overflow:hidden;}
+.dropdown-menu.show{display:block;}
+.dropdown-item{padding:10px 16px;font-size:13px;color:#374151;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .1s;}
+.dropdown-item:hover{background:#f9fafb;}
+.dropdown-item.danger{color:#e11d48;}
+.dropdown-item.danger:hover{background:#fff1f2;}
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="sb-icon" title="">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span class="sb-tooltip">Buscar</span>
+  </div>
+  <div class="sb-icon" title="">
+    <svg viewBox="0 0 24 24"><path d="M3 12L12 3l9 9"/><path d="M9 21V12h6v9"/></svg>
+    <span class="sb-tooltip">Inicio</span>
+  </div>
+  <div class="sb-icon" title="">
+    <svg viewBox="0 0 24 24"><path d="M2 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V7z"/></svg>
+    <span class="sb-tooltip">Productos</span>
+  </div>
+  <div class="sb-icon" title="">
+    <svg viewBox="0 0 24 24"><path d="M18 8a4 4 0 010 8"/><path d="M4 9h1a2 2 0 012 2v2a2 2 0 01-2 2H4V9z"/><path d="M15 5.5v13L7 15V9l8-3.5z"/></svg>
+    <span class="sb-tooltip">Campañas</span>
+  </div>
+  <div class="sb-icon active" id="nav-transactions" title="">
+    <svg viewBox="0 0 24 24"><path d="M7 16V4m0 0L4 7m3-3 3 3"/><path d="M17 8v12m0 0 3-3m-3 3-3-3"/></svg>
+    <span class="sb-tooltip">Transacciones</span>
+  </div>
+  <div class="sb-icon" title="">
+    <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+    <span class="sb-tooltip">Pagos</span>
+  </div>
+  <div class="sb-icon" title="">
+    <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 4-4"/></svg>
+    <span class="sb-tooltip">Estadísticas</span>
+  </div>
+  <div class="sb-icon" title="">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+    <span class="sb-tooltip">Contactos</span>
+  </div>
+  <div class="sb-icon" title="">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    <span class="sb-tooltip">Ajustes</span>
+  </div>
+  <div class="sb-icon" id="nav-nueva-venta" title="" style="margin-top:auto;">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    <span class="sb-badge" id="saleCountBadge">0</span>
+    <span class="sb-tooltip">Nueva venta</span>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-hamburger">
+      <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </div>
+    <div class="hotmart-logo" style="cursor:default;">
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="18" cy="18" r="18" fill="#E8380D"/>
+        <path d="M18 8C18 8 10 13 10 19.5C10 23.6 13.6 27 18 27C22.4 27 26 23.6 26 19.5C26 13 18 8 18 8Z" fill="white"/>
+        <circle cx="18" cy="19.5" r="4" fill="#E8380D"/>
+      </svg>
+      <span>hotmart</span>
+    </div>
+    <input type="file" id="logoUploadInput" accept="image/*" style="display:none;" onchange="uploadLogo(this)"/>
+    <div class="topbar-right">
+      <div class="tb-btn" id="enableNotifBtn" onclick="requestNotificationPermission()" title="Activar notificaciones push">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span style="position:absolute;top:-2px;right:-4px;background:#059669;color:#fff;font-size:8px;font-weight:700;padding:1px 4px;border-radius:8px;display:none;" id="notifActiveIndicator">ON</span>
+      </div>
+      <div class="tb-btn" onclick="showPushNotification('Juan Pérez', 'Curso de Marketing', 99.99)" title="Probar notificación">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      </div>
+      <div class="tb-btn"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><path d="M1 20c0-3.3 3.6-6 8-6"/><path d="M23 20c0-3.3-3.6-6-8-6"/></svg></div>
+      <div class="tb-btn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5" fill="#6b7280"/></svg></div>
+      <div class="tb-btn"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+      <div class="avatar-btn">A</div>
+    </div>
+  </header>
+
+  <!-- ════════════════════════════
+       PAGE 1 — TRANSACTIONS
+  ════════════════════════════ -->
+  <div class="page active" id="page-transactions">
+    <div class="content">
+      <div class="summary">
+        <div>
+          <div style="font-size:11px;color:#9ca3af;font-weight:500;margin-bottom:3px;">Total recibido</div>
+          <div class="summary-amount" id="totalAmount">USD$ 411,89</div>
+          <div class="summary-count" id="txCount">10 transacciones</div>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-note">Ahora, tenemos dos modelos disponibles</div>
+        <div class="summary-right"><button class="btn-modelos">Conocer modelos</button></div>
+      </div>
+
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Transacción</th><th>Comprador</th><th>Nombre del Producto</th>
+              <th>Vendedor</th><th>Fecha de compra</th><th>Pago</th>
+              <th>Has recibido</th><th>Estatus</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="txBody">
+            <tr>
+              <td class="tx-num"><span class="editable" contenteditable="true">HP3037171478</span></td>
+              <td><span class="editable lnk" contenteditable="true">Lili Dávila Velázquez</span></td>
+              <td><span class="editable lnk" contenteditable="true">En Despertar</span></td>
+              <td><span class="editable lnk" contenteditable="true">Alessandro Alan…</span></td>
+              <td class="dt"><span class="editable" contenteditable="true">18/03/2026…</span></td>
+              <td><div class="pay-cell"><div class="mc-wrap"><div class="mc-circles"><div class="mc-r red"></div><div class="mc-r yel"></div></div></div><div class="lock-ico"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div></div></td>
+              <td class="amt"><span class="editable" contenteditable="true">USD$ 13,15</span></td>
+              <td><select class="status-select sel-aprobada"><option value="aprobada" selected>Aprobada</option><option value="completa">Completa</option><option value="pendiente">Pendiente</option><option value="cancelada">Cancelada</option><option value="reembolso">Reembolso</option></select></td>
+              <td><button class="act-btn">⋮</button></td>
+            </tr>
+            <tr>
+              <td class="tx-num"><span class="editable" contenteditable="true">HP3847054233</span></td>
+              <td><span class="editable lnk" contenteditable="true">Brayan Madrigal</span></td>
+              <td><span class="editable lnk" contenteditable="true">En Despertar</span></td>
+              <td><span class="editable lnk" contenteditable="true">Alessandro Alan…</span></td>
+              <td class="dt"><span class="editable" contenteditable="true">17/03/2026…</span></td>
+              <td><div class="pay-cell"><div class="visa-wrap"><span>VISA</span></div><div class="lock-ico"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div></div></td>
+              <td class="amt"><span class="editable" contenteditable="true">USD$ 13,15</span></td>
+              <td><select class="status-select sel-aprobada"><option value="aprobada" selected>Aprobada</option><option value="completa">Completa</option><option value="pendiente">Pendiente</option><option value="cancelada">Cancelada</option><option value="reembolso">Reembolso</option></select></td>
+              <td><button class="act-btn">⋮</button></td>
+            </tr>
+            <tr>
+              <td class="tx-num"><span class="editable" contenteditable="true">HP0943665177</span></td>
+              <td><span class="editable lnk" contenteditable="true">WILLIAM FRANK…</span></td>
+              <td><span class="editable lnk" contenteditable="true">En Despertar</span></td>
+              <td><span class="editable lnk" contenteditable="true">Alessandro Alan…</span></td>
+              <td class="dt"><span class="editable" contenteditable="true">17/03/2026…</span></td>
+              <td><div class="pay-cell"><div class="visa-wrap"><span>VISA</span></div><div class="lock-ico"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div></div></td>
+              <td class="amt"><span class="editable" contenteditable="true">USD$ 13,15</span></td>
+              <td><select class="status-select sel-aprobada"><option value="aprobada" selected>Aprobada</option><option value="completa">Completa</option><option value="pendiente">Pendiente</option><option value="cancelada">Cancelada</option><option value="reembolso">Reembolso</option></select></td>
+              <td><button class="act-btn">⋮</button></td>
+            </tr>
+            <tr>
+              <td class="tx-num"><span class="editable" contenteditable="true">HP0345492853</span></td>
+              <td><span class="editable lnk" contenteditable="true">Maribel Carrasco</span></td>
+              <td><span class="editable lnk" contenteditable="true">La Bóveda de…</span></td>
+              <td><span class="editable lnk" contenteditable="true">Alessandro Alan…</span></td>
+              <td class="dt"><span class="editable" contenteditable="true">14/03/2026…</span></td>
+              <td><div class="pay-cell"><div class="pix-wrap"><span class="pix-icon"></span><span class="txt">Pix</span></div></div></td>
+              <td class="amt"><span class="editable" contenteditable="true">USD$ 16,60</span></td>
+              <td><select class="status-select sel-completa"><option value="aprobada">Aprobada</option><option value="completa" selected>Completa</option><option value="pendiente">Pendiente</option><option value="cancelada">Cancelada</option><option value="reembolso">Reembolso</option></select></td>
+              <td><button class="act-btn">⋮</button></td>
+            </tr>
+            <tr>
+              <td class="tx-num"><span class="editable" contenteditable="true">HP3978579825</span></td>
+              <td><span class="editable lnk" contenteditable="true">Patty Achin</span></td>
+              <td><span class="editable lnk" contenteditable="true">La Bóveda de…</span></td>
+              <td><span class="editable lnk" contenteditable="true">Alessandro Alan…</span></td>
+              <td class="dt"><span class="editable" contenteditable="true">14/03/2026…</span></td>
+              <td><div class="pay-cell"><div class="pix-wrap"><span class="pix-icon"></span><span class="txt">Pix</span></div></div></td>
+              <td class="amt"><span class="editable" contenteditable="true">USD$ 16,60</span></td>
+              <td><select class="status-select sel-completa"><option value="aprobada">Aprobada</option><option value="completa" selected>Completa</option><option value="pendiente">Pendiente</option><option value="cancelada">Cancelada</option><option value="reembolso">Reembolso</option></select></td>
+              <td><button class="act-btn">⋮</button></td>
+            </tr>
+            <tr>
+              <td class="tx-num"><span class="editable" contenteditable="true">HP2997841199</span></td>
+              <td><span class="editable lnk" contenteditable="true">Angie Quispe</span></td>
+              <td><span class="editable lnk" contenteditable="true">La Bóveda de…</span></td>
+              <td><span class="editable lnk" contenteditable="true">Alessandro Alan…</span></td>
+              <td class="dt"><span class="editable" contenteditable="true">13/03/2026…</span></td>
+              <td><div class="pay-cell"><div class="pix-wrap"><span class="pix-icon"></span><span class="txt">Pix</span></div></div></td>
+              <td class="amt"><span class="editable" contenteditable="true">USD$ 16,61</span></td>
+              <td><select class="status-select sel-completa"><option value="aprobada">Aprobada</option><option value="completa" selected>Completa</option><option value="pendiente">Pendiente</option><option value="cancelada">Cancelada</option><option value="reembolso">Reembolso</option></select></td>
+              <td><button class="act-btn">⋮</button></td>
+            </tr>
+            <tr>
+              <td class="tx-num"><span class="editable" contenteditable="true">HP3048243305</span></td>
+              <td><span class="editable lnk" contenteditable="true">Jesús Calle</span></td>
+              <td><span class="editable lnk" contenteditable="true">La Bóveda de…</span></td>
+              <td><span class="editable lnk" contenteditable="true">Alessandro Alan…</span></td>
+              <td class="dt"><span class="editable" contenteditable="true">13/03/2026…</span></td>
+              <td><div class="pay-cell"><div class="pix-wrap"><span class="pix-icon"></span><span class="txt">Pix</span></div></div></td>
+              <td class="amt"><span class="editable" contenteditable="true">USD$ 16,61</span></td>
+              <td><select class="status-select sel-completa"><option value="aprobada">Aprobada</option><option value="completa" selected>Completa</option><option value="pendiente">Pendiente</option><option value="cancelada">Cancelada</option><option value="reembolso">Reembolso</option></select></td>
+              <td><button class="act-btn">⋮</button></td>
+            </tr>
+            <tr>
+              <td class="tx-num"><span class="editable" contenteditable="true">HP2703492967</span></td>
+              <td><span class="editable lnk" contenteditable="true">Anny Muñante</span></td>
+              <td><span class="editable lnk" contenteditable="true">La Bóveda de…</span></td>
+              <td><span class="editable lnk" contenteditable="true">Alessandro Alan…</span></td>
+              <td class="dt"><span class="editable" contenteditable="true">13/03/2026…</span></td>
+              <td><div class="pay-cell"><div class="pix-wrap"><span class="pix-icon"></span><span class="txt">Pix</span></div></div></td>
+              <td class="amt"><span class="editable" contenteditable="true">USD$ 16,61</span></td>
+              <td><select class="status-select sel-completa"><option value="aprobada">Aprobada</option><option value="completa" selected>Completa</option><option value="pendiente">Pendiente</option><option value="cancelada">Cancelada</option><option value="reembolso">Reembolso</option></select></td>
+              <td><button class="act-btn">⋮</button></td>
+            </tr>
+            <tr>
+              <td class="tx-num"><span class="editable" contenteditable="true">HP3852865982</span></td>
+              <td><span class="editable lnk" contenteditable="true">Ray Yañez</span></td>
+              <td><span class="editable lnk" contenteditable="true">La Bóveda de…</span></td>
+              <td><span class="editable lnk" contenteditable="true">Alessandro Alan…</span></td>
+              <td class="dt"><span class="editable" contenteditable="true">12/03/2026…</span></td>
+              <td><div class="pay-cell"><div class="pix-wrap"><span class="pix-icon"></span><span class="txt">Pix</span></div></div></td>
+              <td class="amt"><span class="editable" contenteditable="true">USD$ 16,61</span></td>
+              <td><select class="status-select sel-completa"><option value="aprobada">Aprobada</option><option value="completa" selected>Completa</option><option value="pendiente">Pendiente</option><option value="cancelada">Cancelada</option><option value="reembolso">Reembolso</option></select></td>
+              <td><button class="act-btn">⋮</button></td>
+            </tr>
+            <tr>
+              <td class="tx-num"><span class="editable" contenteditable="true">HP4275352567</span></td>
+              <td><span class="editable lnk" contenteditable="true">Omar González…</span></td>
+              <td><span class="editable lnk" contenteditable="true">hotmind</span></td>
+              <td><span class="editable lnk" contenteditable="true">Alessandro Alan…</span></td>
+              <td class="dt"><span class="editable" contenteditable="true">12/03/2026…</span></td>
+              <td><div class="pay-cell"><div class="visa-wrap"><span>VISA</span></div></div></td>
+              <td class="amt"><span class="editable" contenteditable="true">USD$ 16,50</span></td>
+              <td><select class="status-select sel-completa"><option value="aprobada">Aprobada</option><option value="completa" selected>Completa</option><option value="pendiente">Pendiente</option><option value="cancelada">Cancelada</option><option value="reembolso">Reembolso</option></select></td>
+              <td><button class="act-btn">⋮</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════
+       PAGE 2 — NUEVA VENTA
+  ════════════════════════════ -->
+  <div class="page" id="page-nueva-venta">
+    <div class="nv-wrap">
+
+      <div class="nv-header">
+        <div class="nv-breadcrumb">
+          <a onclick="navigate('transactions')">Transacciones</a>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          <span>Nueva venta</span>
+        </div>
+        <div class="nv-title">Registrar nueva venta</div>
+        <div class="nv-subtitle">Completa los datos para simular una transacción. Aparecerá en tiempo real en la lista principal.</div>
+        <div class="nv-stats">
+          <div class="nv-stat">
+            <span class="nv-stat-dot"></span>
+            <span>Ventas enviadas esta sesión:&nbsp;<span class="nv-stat-val" id="sessionCount">0</span></span>
+          </div>
+          <div class="nv-stat" id="sessionTotalWrap" style="display:none;">
+            <span style="color:#e5e7eb;">|</span>
+            <span>Total simulado:&nbsp;<span class="nv-stat-val" id="sessionTotal">USD$ 0,00</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FORM -->
+      <div class="nv-card" id="nvForm">
+        <div class="nv-card-title">
+          <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 8v4l3 3"/></svg>
+          Datos de la transacción
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Comprador <span class="req">*</span></label>
+            <input class="form-input" id="f-buyer" type="text" placeholder="Nombre completo" autocomplete="off"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nombre del producto <span class="req">*</span></label>
+            <input class="form-input" id="f-product" type="text" placeholder="Ej: En Despertar" autocomplete="off"/>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Vendedor</label>
+            <input class="form-input" id="f-vendor" type="text" placeholder="Nombre del vendedor" value="Alessandro Alan…" autocomplete="off"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Monto (USD) <span class="req">*</span></label>
+            <div class="amount-wrap">
+              <span class="amount-prefix">USD$</span>
+              <input class="form-input" id="f-amount" type="number" min="0.01" step="0.01" placeholder="0.00"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row full" style="margin-bottom:16px;">
+          <div class="form-group">
+            <label class="form-label">Método de pago <span class="req">*</span></label>
+            <div class="pay-grid" id="payOptions">
+              <label class="pay-opt selected" data-val="visa">
+                <input type="radio" name="pay" value="visa" checked/>
+                <span style="font-style:italic;font-weight:800;color:#1a1f71;font-size:13px;">VISA</span>
+              </label>
+              <label class="pay-opt" data-val="mc">
+                <input type="radio" name="pay" value="mc"/>
+                <span style="display:inline-flex;align-items:center;"><span style="width:14px;height:14px;border-radius:50%;background:#eb001b;display:inline-block;"></span><span style="width:14px;height:14px;border-radius:50%;background:#f79e1b;display:inline-block;margin-left:-6px;"></span></span>
+                <span>Mastercard</span>
+              </label>
+              <label class="pay-opt" data-val="pix">
+                <input type="radio" name="pay" value="pix"/>
+                <span style="width:13px;height:13px;background:#32bcad;transform:rotate(45deg);border-radius:2px;display:inline-block;flex-shrink:0;"></span>
+                <span style="color:#00756e;font-weight:700;">Pix</span>
+              </label>
+              <label class="pay-opt" data-val="paypal">
+                <input type="radio" name="pay" value="paypal"/>
+                <span style="font-size:12px;font-weight:800;color:#003087;">Pay<span style="color:#009cde;">Pal</span></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Fecha de compra</label>
+            <input class="form-input" id="f-date" type="text" readonly/>
+          </div>
+          <div class="form-group" style="justify-content:flex-end;padding-bottom:2px;">
+            <label class="form-label">Estatus</label>
+            <div style="margin-top:4px;">
+              <div class="status-preview">
+                <span class="status-dot"></span>
+                Aprobada — siempre
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-send" id="submitBtn">
+            <svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+            Enviar venta
+          </button>
+          <button class="btn-cancel" onclick="navigate('transactions')">Cancelar</button>
+          <span class="form-hint">Enter para enviar</span>
+        </div>
+      </div>
+
+      <!-- SUCCESS STATE -->
+      <div class="nv-success" id="nvSuccess">
+        <div class="success-circle">✓</div>
+        <div class="success-title">¡Venta realizada!</div>
+        <div class="success-sub">La transacción ya aparece en la lista principal.</div>
+
+        <!-- Mini preview card -->
+        <div class="success-preview" id="successPreview">
+          <div class="sp-label">Resumen de la venta</div>
+          <div class="sp-row">
+            <div>
+              <div class="sp-buyer" id="sp-buyer">—</div>
+              <div class="sp-product" id="sp-product">—</div>
+            </div>
+            <div class="sp-amount" id="sp-amount">—</div>
+          </div>
+          <div class="sp-meta">
+            <span class="sp-chip green">✓ Aprobada</span>
+            <span class="sp-chip gray" id="sp-method">—</span>
+            <span class="sp-chip gray" id="sp-vendor-chip">—</span>
+            <span class="sp-chip gray" id="sp-date">—</span>
+          </div>
+        </div>
+
+        <div class="success-actions">
+          <button class="btn-otra" onclick="resetForm()">+ Registrar otra venta</button>
+          <button class="btn-go-tx" onclick="navigate('transactions')">Ver transacciones</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- Toasts -->
+<div id="toast-container"></div>
+
+<!-- Edit hint -->
+<div class="edit-hint" id="hint">✏️ Haz clic para editar</div>
+
+<script>
+// ══════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════
+let totalUSD    = 411.89;
+let txCount     = 10;
+let saleCount   = 0;      // sales submitted this session
+let sessionUSD  = 0;      // total USD submitted this session
+
+// ══════════════════════════════════════
+//  LOGO UPLOAD
+// ══════════════════════════════════════
+function uploadLogo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = document.getElementById('logoImg');
+    const placeholder = document.getElementById('logoPlaceholder');
+    img.src = e.target.result;
+    img.style.display = 'block';
+    placeholder.style.display = 'none';
+    localStorage.setItem('hm_logo', e.target.result);
+  };
+  reader.readAsDataURL(file);
+}
+
+// Restore logo from localStorage on load (synchronous — DOM is ready at bottom of body)
+(function() {
+  const saved = localStorage.getItem('hm_logo');
+  if (saved) {
+    const img = document.getElementById('logoImg');
+    const placeholder = document.getElementById('logoPlaceholder');
+    if (img) { img.src = saved; img.style.display='block'; }
+    if (placeholder) placeholder.style.display='none';
+  }
+})();
+
+// ══════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sb-icon').forEach(i => i.classList.remove('active'));
+
+  if (page === 'transactions') {
+    document.getElementById('page-transactions').classList.add('active');
+    document.getElementById('nav-transactions').classList.add('active');
+    document.title = 'Hotmart – Transacciones';
+  } else if (page === 'nueva-venta') {
+    document.getElementById('page-nueva-venta').classList.add('active');
+    document.getElementById('nav-nueva-venta').classList.add('active');
+    document.title = 'Hotmart – Nueva venta';
+    setTodayDate();
+  }
+}
+
+document.getElementById('nav-transactions').addEventListener('click', () => navigate('transactions'));
+document.getElementById('nav-nueva-venta').addEventListener('click', () => navigate('nueva-venta'));
+
+navigate('transactions');
+
+// ══════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════
+function setTodayDate() {
+  const now = new Date();
+  const dd  = String(now.getDate()).padStart(2,'0');
+  const mm  = String(now.getMonth()+1).padStart(2,'0');
+  const yy  = now.getFullYear();
+  const hh  = String(now.getHours()).padStart(2,'0');
+  const mi  = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('f-date').value = `${dd}/${mm}/${yy} ${hh}:${mi}`;
+}
+
+function updateTotal(amount) {
+  totalUSD += amount;
+  txCount++;
+  document.getElementById('totalAmount').textContent =
+    'USD$ ' + totalUSD.toFixed(2).replace('.', ',');
+  document.getElementById('txCount').textContent =
+    txCount + ' transacci' + (txCount===1?'ón':'ones');
+}
+
+function updateSessionStats(amount) {
+  saleCount++;
+  sessionUSD += amount;
+  // Sidebar badge
+  const badge = document.getElementById('saleCountBadge');
+  badge.textContent = saleCount;
+  badge.classList.add('visible');
+  badge.classList.remove('pop');
+  void badge.offsetWidth; // force reflow
+  badge.classList.add('pop');
+  // Session counter on page 2
+  document.getElementById('sessionCount').textContent = saleCount;
+  document.getElementById('sessionTotal').textContent =
+    'USD$ ' + sessionUSD.toFixed(2).replace('.', ',');
+  document.getElementById('sessionTotalWrap').style.display = '';
+  // Bump notification badge
+  const nb = document.getElementById('notifBadge');
+  nb.textContent = parseInt(nb.textContent) + 1;
+}
+
+const payLabels = {visa:'VISA', mc:'Mastercard', pix:'Pix', paypal:'PayPal'};
+
+// ══════════════════════════════════════
+//  PAYMENT OPTION SELECTION
+// ══════════════════════════════════════
+document.querySelectorAll('.pay-opt').forEach(opt => {
+  opt.addEventListener('click', () => {
+    document.querySelectorAll('.pay-opt').forEach(o => o.classList.remove('selected'));
+    opt.classList.add('selected');
+    opt.querySelector('input').checked = true;
+  });
+});
+
+// ══════════════════════════════════════
+//  EDITABLE CELLS
+// ══════════════════════════════════════
+const hint = document.getElementById('hint');
+function attachEditable(el) {
+  el.addEventListener('mouseenter', () => { if(document.activeElement!==el) hint.style.display='block'; });
+  el.addEventListener('mousemove', e => {
+    hint.style.left = (e.clientX - hint.offsetWidth/2) + 'px';
+    hint.style.top  = (e.clientY - hint.offsetHeight - 10) + 'px';
+  });
+  el.addEventListener('mouseleave', () => hint.style.display='none');
+  el.addEventListener('focus', () => hint.style.display='none');
+  el.addEventListener('keydown', e => { if(e.key==='Enter'){e.preventDefault();el.blur();} });
+}
+document.querySelectorAll('.editable').forEach(attachEditable);
+
+// ══════════════════════════════════════
+//  STATUS SELECT COLOURS
+// ══════════════════════════════════════
+function attachSelect(sel) {
+  sel.addEventListener('change', function() { this.className = 'status-select sel-' + this.value; });
+}
+document.querySelectorAll('.status-select').forEach(attachSelect);
+
+// ══════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════
+function showToast(buyer, product, amount, payMethod) {
+  console.log('showToast called:', buyer, product, amount);
+  
+  const toast = document.createElement('div');
+  toast.setAttribute('style', [
+    'position:fixed',
+    'top:70px',
+    'right:20px',
+    'background:#1f2937',
+    'border-left:5px solid #34d399',
+    'border-radius:12px',
+    'box-shadow:0 8px 30px rgba(0,0,0,.6)',
+    'padding:16px 40px 16px 16px',
+    'display:flex',
+    'align-items:center',
+    'gap:12px',
+    'min-width:280px',
+    'max-width:350px',
+    'z-index:2147483647',
+    'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif',
+    'animation:slideIn .3s ease'
+  ].join(';'));
+  
+  toast.innerHTML = `
+    <div style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:#E8380D;display:flex;align-items:center;justify-content:center;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 2s-6 5-6 10a6 6 0 0012 0C18 7 12 2 12 2z"/></svg>
+    </div>
+    <div style="flex:1;">
+      <div style="font-size:11px;font-weight:700;color:#34d399;margin-bottom:3px;">✓ Venta realizada</div>
+      <div style="font-size:13px;font-weight:700;color:#fff;">${String(buyer).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      <div style="font-size:12px;color:#9ca3af;">${String(product).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+    </div>
+    <div style="font-size:14px;font-weight:800;color:#34d399;">+USD$${parseFloat(amount).toFixed(2)}</div>
+    <button onclick="this.parentElement.remove()" style="position:absolute;top:6px;right:8px;background:none;border:none;cursor:pointer;color:#6b7280;font-size:18px;">×</button>
+  `;
+  
+  document.body.appendChild(toast);
+  console.log('Toast appended to body, element:', toast);
+  setTimeout(() => { if(toast.parentElement) toast.remove(); }, 6000);
+}
+
+// ── Dropdown menu
+function toggleDropdown(btn) {
+  document.querySelectorAll('.dropdown-menu.show').forEach(m => {
+    if (m !== btn.nextElementSibling) m.classList.remove('show');
+  });
+  btn.nextElementSibling.classList.toggle('show');
+}
+
+function deleteRow(item) {
+  const row = item.closest('tr');
+  const fbKey = row.dataset.fbKey;
+
+  if (fbKey) {
+    // Delete from Firebase
+    fetch(`https://pagina-hotmart-default-rtdb.firebaseio.com/ventas/${fbKey}.json`, {
+      method: 'DELETE'
+    }).then(() => {
+      console.log('Deleted from Firebase:', fbKey);
+    }).catch(err => console.error('Error deleting:', err));
+  }
+
+  row.style.transition = 'opacity 0.3s';
+  row.style.opacity = '0';
+  setTimeout(() => row.remove(), 300);
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.dropdown')) {
+    document.querySelectorAll('.dropdown-menu.show').forEach(m => m.classList.remove('show'));
+  }
+});
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// ══════════════════════════════════════
+//  BUILD PAY CELL
+// ══════════════════════════════════════
+function buildPayCell(method) {
+  const lock = `<div class="lock-ico"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>`;
+  if(method==='visa')    return `<div class="pay-cell"><div class="visa-wrap"><span>VISA</span></div>${lock}</div>`;
+  if(method==='mc')      return `<div class="pay-cell"><div class="mc-wrap"><div class="mc-circles"><div class="mc-r red"></div><div class="mc-r yel"></div></div></div>${lock}</div>`;
+  if(method==='pix')     return `<div class="pay-cell"><div class="pix-wrap"><span class="pix-icon"></span><span class="txt">Pix</span></div></div>`;
+  if(method==='paypal')  return `<div class="pay-cell"><div class="paypal-wrap"><span style="font-size:11px;font-weight:800;color:#003087;">Pay<span style="color:#009cde;">Pal</span></span></div>${lock}</div>`;
+  return '';
+}
+
+// ══════════════════════════════════════
+//  ADD ROW TO TABLE
+// ══════════════════════════════════════
+function addRowToTable(data) {
+  const tbody = document.getElementById('txBody');
+  const now   = new Date();
+  const dd    = String(now.getDate()).padStart(2,'0');
+  const mm    = String(now.getMonth()+1).padStart(2,'0');
+  const yy    = now.getFullYear();
+  const hh    = String(now.getHours()).padStart(2,'0');
+  const mi    = String(now.getMinutes()).padStart(2,'0');
+  const txId  = 'HP' + Math.floor(Math.random()*9000000000+1000000000);
+  const vendor = escHtml(data.vendor || 'Alessandro Alan…');
+  const tr    = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="tx-num"><span class="editable" contenteditable="true">${txId}</span><span class="new-tag">NUEVO</span></td>
+    <td><span class="editable lnk" contenteditable="true">${escHtml(data.buyer)}</span></td>
+    <td><span class="editable lnk" contenteditable="true">${escHtml(data.product)}</span></td>
+    <td><span class="editable lnk" contenteditable="true">${vendor}</span></td>
+    <td class="dt"><span class="editable" contenteditable="true">${dd}/${mm}/${yy} ${hh}:${mi}</span></td>
+    <td>${buildPayCell(data.payMethod)}</td>
+    <td class="amt"><span class="editable" contenteditable="true">USD$ ${parseFloat(data.amount).toFixed(2).replace('.',',')}</span></td>
+    <td><select class="status-select sel-aprobada"><option value="aprobada" selected>Aprobada</option><option value="completa">Completa</option><option value="pendiente">Pendiente</option><option value="cancelada">Cancelada</option><option value="reembolso">Reembolso</option></select></td>
+    <td><div class="dropdown"><button class="act-btn" onclick="toggleDropdown(this)">⋮</button><div class="dropdown-menu"><div class="dropdown-item danger" onclick="deleteRow(this)">🗑 Eliminar</div></div></div></td>
+  `;
+  if (data._fbKey) tr.dataset.fbKey = data._fbKey;
+  // Flash green background
+  tr.style.background = '#f0fdf4';
+  tbody.insertBefore(tr, tbody.firstChild);
+  setTimeout(() => { tr.style.transition='background 2s ease'; tr.style.background=''; }, 100);
+  tr.querySelectorAll('.editable').forEach(attachEditable);
+  tr.querySelectorAll('.status-select').forEach(attachSelect);
+  // Remove NEW tag after animation
+  setTimeout(() => {
+    const tag = tr.querySelector('.new-tag');
+    if(tag) tag.remove();
+  }, 3500);
+}
+
+// ══════════════════════════════════════
+//  ONESIGNAL PUSH NOTIFICATIONS
+// ══════════════════════════════════════
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal) {
+  await OneSignal.init({
+    appId: "8881927b-8fcf-41de-a86d-7fe035ba2b5f",
+    safari_web_id: "web.onesignal.auto.00e855ed-5f66-45b8-ad03-54b1e142944e",
+    notifyButton: {
+      enable: false, // We'll use our custom button
+    },
+    allowLocalhostAsSecureOrigin: true,
+  });
+  
+  console.log('OneSignal initialized');
+  
+  // Check subscription status
+  OneSignal.User.PushSubscription.addEventListener('change', function(event) {
+    console.log('Push subscription changed:', event);
+    if (event.current.optedIn) {
+      updateNotificationIndicator();
+    }
+  });
+});
+
+async function requestNotificationPermission() {
+  try {
+    // Wait for OneSignal to be ready
+    await new Promise(resolve => {
+      if (window.OneSignal) {
+        resolve();
+      } else {
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(function() {
+          resolve();
+        });
+      }
+    });
+    
+    const permission = await OneSignal.Notifications.requestPermission();
+    
+    if (permission) {
+      alert('✅ Notificaciones activadas! Recibirás alertas de nuevas ventas.');
+      updateNotificationIndicator();
+    } else {
+      alert('❌ Necesitas activar los permisos de notificación');
+    }
+  } catch (error) {
+    console.error('Error requesting permission:', error);
+    alert('❌ Error al activar notificaciones: ' + error.message);
+  }
+}
+
+function sendOneSignalNotification(buyer, product, amount) {
+  const appId = '8881927b-8fcf-41de-a86d-7fe035ba2b5f';
+  const restApiKey = 'os_v2_app_rcaze64pz5a55kdnp7qdlorll7zjxwj47p4eg34fpytq73estvgrrho2a7mv2enqznxvvtlza525cl4upfdl2d5o5ekekaqw4cyuxwy';
+  
+  console.log('Sending OneSignal notification:', { buyer, product, amount });
+  
+  fetch('https://onesignal.com/api/v1/notifications', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Basic ' + restApiKey
+    },
+    body: JSON.stringify({
+      app_id: appId,
+      included_segments: ['Subscribed Users'],
+      headings: { en: '💰 Nueva venta realizada' },
+      contents: { en: `${buyer} compró ${product}\nMonto: USD$ ${amount.toFixed(2)}` },
+      big_picture: 'https://i.imgur.com/8YqKQNJ.png',
+      chrome_web_icon: 'https://i.imgur.com/8YqKQNJ.png',
+      firefox_icon: 'https://i.imgur.com/8YqKQNJ.png',
+      url: 'https://paginahotmart-git-main-berdugo1232-5800s-projects.vercel.app/hotmart-transactions.html'
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('OneSignal notification sent successfully:', data);
+  })
+  .catch(error => {
+    console.error('Error sending OneSignal notification:', error);
+  });
+}
+
+// ══════════════════════════════════════
+//  PUSH NOTIFICATIONS (Fallback)
+// ══════════════════════════════════════
+
+function updateNotificationIndicator() {
+  const indicator = document.getElementById('notifActiveIndicator');
+  if (indicator && Notification.permission === 'granted') {
+    indicator.style.display = 'block';
+  }
+}
+
+function showPushNotification(buyer, product, amount) {
+  console.log('showPushNotification called:', { buyer, product, amount });
+  console.log('Notification permission:', Notification.permission);
+  console.log('Notification supported:', 'Notification' in window);
+  
+  // Try system notification first
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      const logoImg = document.getElementById('logoImg');
+      const iconUrl = (logoImg && logoImg.src && logoImg.style.display !== 'none') 
+        ? logoImg.src 
+        : 'https://i.imgur.com/8YqKQNJ.png';
+      
+      console.log('Creating notification with icon:', iconUrl);
+      
+      const notification = new Notification('💰 Nueva venta realizada', {
+        body: `${buyer} compró ${product}\nMonto: USD$ ${amount.toFixed(2)}`,
+        icon: iconUrl,
+        badge: iconUrl,
+        tag: 'new-sale-' + Date.now(),
+        requireInteraction: false,
+        silent: false,
+        vibrate: [200, 100, 200]
+      });
+
+      console.log('Notification created successfully');
+
+      notification.onclick = function() {
+        console.log('Notification clicked');
+        window.focus();
+        notification.close();
+      };
+
+      notification.onerror = function(error) {
+        console.error('Notification error:', error);
+      };
+
+      setTimeout(() => notification.close(), 6000);
+    } catch (error) {
+      console.error('Error creating notification:', error);
+    }
+  }
+  
+  // Always show in-page alert for mobile compatibility (iPhone)
+  showInPageAlert(buyer, product, amount);
+  
+  // Play sound
+  playNotificationSound();
+  
+  // Vibrate if supported
+  if ('vibrate' in navigator) {
+    navigator.vibrate([200, 100, 200, 100, 200]);
+  }
+}
+
+function playNotificationSound() {
+  try {
+    // Create audio context for notification sound
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = 800;
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.5);
+  } catch (error) {
+    console.log('Could not play sound:', error);
+  }
+}
+
+function showInPageAlert(buyer, product, amount) {
+  // Create floating alert for mobile
+  const alert = document.createElement('div');
+  alert.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(5, 150, 105, 0.4);
+    z-index: 99999;
+    min-width: 300px;
+    max-width: 90%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+  `;
+  
+  alert.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="font-size: 32px;">💰</div>
+      <div>
+        <div style="font-weight:700;font-size:15px;">¡Venta aprobada!</div>
+        <div style="font-size:13px;opacity:.9;">${buyer} · USD$ ${parseFloat(amount).toFixed(2)}</div>
+        <div style="font-size:12px;opacity:.75;">${product}</div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(alert);
+  requestAnimationFrame(() => {
+    alert.style.transform = 'translateX(-50%) translateY(0)';
+  });
+  setTimeout(() => {
+    alert.style.transform = 'translateX(-50%) translateY(-120px)';
+    setTimeout(() => alert.remove(), 500);
+  }, 4000);
+  alert.addEventListener('click', () => alert.remove());
+}
+
+// ══════════════════════════════════════
+//  FIREBASE REALTIME POLLING
+// ══════════════════════════════════════
+const FB_URL = 'https://pagina-hotmart-default-rtdb.firebaseio.com/ventas.json';
+let lastTs = Date.now();
+let seenKeys = new Set();
+let fbReady = false;
+
+function initFirebase() {
+  fetch(FB_URL)
+    .then(r => r.json())
+    .then(data => {
+      if (data) {
+        Object.entries(data).forEach(([key, d]) => {
+          seenKeys.add(key);
+          if (d && d.ts) lastTs = Math.max(lastTs, d.ts);
+        });
+      }
+      fbReady = true;
+      console.log('Firebase initialized, existing keys:', seenKeys.size);
+    })
+    .catch(() => { fbReady = true; });
+}
+
+function fetchNewSales() {
+  if (!fbReady) return;
+  fetch(FB_URL)
+    .then(r => r.json())
+    .then(data => {
+      if (!data) return;
+      const newEntries = Object.entries(data)
+        .filter(([key, d]) => d && d.ts && d.ts > lastTs && !seenKeys.has(key))
+        .sort((a, b) => a[1].ts - b[1].ts);
+      newEntries.forEach(([key, d]) => {
+        seenKeys.add(key);
+        lastTs = Math.max(lastTs, d.ts);
+        d._fbKey = key;
+        addRowToTable(d);
+        updateTotal(parseFloat(d.amount));
+        updateSessionStats(parseFloat(d.amount));
+        showToast(d.buyer, d.product, d.amount, d.payMethod);
+        sendOneSignalNotification(d.buyer, d.product, parseFloat(d.amount));
+        showPushNotification(d.buyer, d.product, parseFloat(d.amount));
+      });
+    })
+    .catch(() => {});
+}
+
+initFirebase();
+setInterval(fetchNewSales, 3000);
+</script>
+</body>
+</html>
