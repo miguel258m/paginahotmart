@@ -749,11 +749,8 @@ document.querySelectorAll('.status-select').forEach(attachSelect);
 // ══════════════════════════════════════
 function showToast(buyer, product, amount, payMethod) {
   console.log('showToast called:', buyer, product, amount);
-  // Remove any existing toasts
-  document.querySelectorAll('.hotmart-toast').forEach(t => t.remove());
   
   const toast = document.createElement('div');
-  toast.className = 'hotmart-toast';
   toast.setAttribute('style', [
     'position:fixed',
     'top:70px',
@@ -766,29 +763,28 @@ function showToast(buyer, product, amount, payMethod) {
     'display:flex',
     'align-items:center',
     'gap:12px',
-    'min-width:300px',
-    'max-width:380px',
+    'min-width:280px',
+    'max-width:350px',
     'z-index:2147483647',
-    'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif'
+    'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif',
+    'animation:slideIn .3s ease'
   ].join(';'));
   
   toast.innerHTML = `
     <div style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:#E8380D;display:flex;align-items:center;justify-content:center;">
-      <svg width="20" height="20" viewBox="0 0 36 36" fill="none">
-        <path d="M18 4C18 4 8 11 8 19.5C8 24.7 12.5 29 18 29C23.5 29 28 24.7 28 19.5C28 11 18 4 18 4Z" fill="white"/>
-        <circle cx="18" cy="20" r="5" fill="#E8380D"/>
-      </svg>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 2s-6 5-6 10a6 6 0 0012 0C18 7 12 2 12 2z"/></svg>
     </div>
-    <div style="flex:1;min-width:0;">
-      <div style="font-size:11px;font-weight:700;color:#34d399;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">✓ Venta realizada</div>
-      <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:2px;">${escHtml(buyer)}</div>
+    <div style="flex:1;">
+      <div style="font-size:11px;font-weight:700;color:#34d399;margin-bottom:3px;">✓ Venta realizada</div>
+      <div style="font-size:13px;font-weight:700;color:#fff;">${escHtml(buyer)}</div>
       <div style="font-size:12px;color:#9ca3af;">${escHtml(product)}</div>
     </div>
-    <div style="font-size:15px;font-weight:800;color:#34d399;flex-shrink:0;">+USD$${parseFloat(amount).toFixed(2)}</div>
-    <button onclick="this.parentElement.remove()" style="position:absolute;top:8px;right:10px;background:none;border:none;cursor:pointer;color:#6b7280;font-size:16px;line-height:1;">✕</button>
+    <div style="font-size:14px;font-weight:800;color:#34d399;">+USD$${parseFloat(amount).toFixed(2)}</div>
+    <button onclick="this.parentElement.remove()" style="position:absolute;top:6px;right:8px;background:none;border:none;cursor:pointer;color:#6b7280;font-size:18px;">×</button>
   `;
   
   document.body.appendChild(toast);
+  console.log('Toast appended to body, element:', toast);
   setTimeout(() => { if(toast.parentElement) toast.remove(); }, 6000);
 }
 
@@ -1081,157 +1077,74 @@ function showInPageAlert(buyer, product, amount) {
   alert.innerHTML = `
     <div style="display: flex; align-items: center; gap: 12px;">
       <div style="font-size: 32px;">💰</div>
-      <div style="flex: 1;">
-        <div style="font-size: 14px; font-weight: 700; margin-bottom: 4px;">Nueva venta realizada</div>
-        <div style="font-size: 12px; opacity: 0.95;">${buyer} · ${product}</div>
-        <div style="font-size: 15px; font-weight: 800; margin-top: 4px;">USD$ ${amount.toFixed(2)}</div>
+      <div>
+        <div style="font-weight:700;font-size:15px;">¡Venta aprobada!</div>
+        <div style="font-size:13px;opacity:.9;">${buyer} · USD$ ${parseFloat(amount).toFixed(2)}</div>
+        <div style="font-size:12px;opacity:.75;">${product}</div>
       </div>
     </div>
   `;
-  
   document.body.appendChild(alert);
-  
-  // Animate in
-  setTimeout(() => {
+  requestAnimationFrame(() => {
     alert.style.transform = 'translateX(-50%) translateY(0)';
-  }, 10);
-  
-  // Auto remove
+  });
   setTimeout(() => {
-    alert.style.transform = 'translateX(-50%) translateY(-100px)';
+    alert.style.transform = 'translateX(-50%) translateY(-120px)';
     setTimeout(() => alert.remove(), 500);
-  }, 5000);
-  
-  // Click to dismiss
-  alert.onclick = () => {
-    alert.style.transform = 'translateX(-50%) translateY(-100px)';
-    setTimeout(() => alert.remove(), 300);
-  };
+  }, 4000);
+  alert.addEventListener('click', () => alert.remove());
 }
 
-// Check permission on page load
-window.addEventListener('DOMContentLoaded', () => {
-  updateNotificationIndicator();
-});
-
 // ══════════════════════════════════════
-//  FIREBASE REALTIME SYNC
+//  FIREBASE REALTIME POLLING
 // ══════════════════════════════════════
 const FB_URL = 'https://pagina-hotmart-default-rtdb.firebaseio.com/ventas.json';
-let lastTs = 0;
-let isFirstLoad = true;
+let lastTs = Date.now();
+let seenKeys = new Set();
+let fbReady = false;
 
-function fetchNewSales() {
+function initFirebase() {
   fetch(FB_URL)
     .then(r => r.json())
     .then(data => {
-      if (!data) { isFirstLoad = false; return; }
-      const allSales = Object.values(data);
-      const allKeys = Object.keys(data);
-      const newSales = allSales
-        .map((d, i) => ({ ...d, _fbKey: allKeys[i] }))
-        .filter(d => d && d.ts && d.ts > lastTs);
-      
-      const wasFirstLoad = isFirstLoad;
-      console.log('wasFirstLoad:', wasFirstLoad, 'newSales:', newSales.length, 'lastTs:', lastTs);
-      
-      newSales
-        .sort((a,b) => a.ts - b.ts)
-        .forEach(d => {
-          lastTs = d.ts + 1;
-          const amt = parseFloat(d.amount);
-          addRowToTable(d);
-          updateTotal(amt);
-          if (!wasFirstLoad) {
-            console.log('Showing toast for new sale:', d.buyer);
-            updateSessionStats(amt);
-            showToast(d.buyer, d.product, d.amount, d.payMethod);
-            showInPageAlert(d.buyer, d.product, d.amount);
-            sendOneSignalNotification(d.buyer, d.product, d.amount);
-          }
+      if (data) {
+        Object.entries(data).forEach(([key, d]) => {
+          seenKeys.add(key);
+          if (d && d.ts) lastTs = Math.max(lastTs, d.ts);
         });
-      isFirstLoad = false;
+      }
+      fbReady = true;
+      console.log('Firebase initialized, existing keys:', seenKeys.size);
+    })
+    .catch(() => { fbReady = true; });
+}
+
+function fetchNewSales() {
+  if (!fbReady) return;
+  fetch(FB_URL)
+    .then(r => r.json())
+    .then(data => {
+      if (!data) return;
+      const newEntries = Object.entries(data)
+        .filter(([key, d]) => d && d.ts && d.ts > lastTs && !seenKeys.has(key))
+        .sort((a, b) => a[1].ts - b[1].ts);
+      newEntries.forEach(([key, d]) => {
+        seenKeys.add(key);
+        lastTs = Math.max(lastTs, d.ts);
+        d._fbKey = key;
+        addRowToTable(d);
+        updateTotal(parseFloat(d.amount));
+        updateSessionStats(parseFloat(d.amount));
+        showToast(d.buyer, d.product, d.amount, d.payMethod);
+        sendOneSignalNotification(d.buyer, d.product, parseFloat(d.amount));
+        showPushNotification(d.buyer, d.product, parseFloat(d.amount));
+      });
     })
     .catch(() => {});
 }
 
-// Fetch immediately on load
-fetchNewSales();
-// Then poll every 3 seconds
+initFirebase();
 setInterval(fetchNewSales, 3000);
-
-// ══════════════════════════════════════
-//  SUBMIT FORM
-// ══════════════════════════════════════
-function doSubmit() {
-  const buyer     = document.getElementById('f-buyer').value.trim();
-  const product   = document.getElementById('f-product').value.trim();
-  const vendor    = document.getElementById('f-vendor').value.trim() || 'Alessandro Alan…';
-  const amount    = parseFloat(document.getElementById('f-amount').value);
-  const payMethod = document.querySelector('.pay-opt.selected')?.dataset.val || 'visa';
-  const dateStr   = document.getElementById('f-date').value;
-
-  if(!buyer)           { document.getElementById('f-buyer').focus();   shake('f-buyer');   return; }
-  if(!product)         { document.getElementById('f-product').focus(); shake('f-product'); return; }
-  if(!amount || amount<=0){ document.getElementById('f-amount').focus(); shake('f-amount'); return; }
-
-  const saleData = { buyer, product, vendor, amount, payMethod, dateStr, ts: Date.now() };
-
-  // Publicar en Firebase para otros dispositivos
-  fetch('https://pagina-hotmart-default-rtdb.firebaseio.com/ventas.json', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(saleData)
-  }).catch(() => {});
-
-  // Update THIS tab's transactions table
-  addRowToTable(saleData);
-  updateTotal(amount);
-  showToast(buyer, product, amount, payMethod);
-  updateSessionStats(amount);
-
-  // Update success preview
-  document.getElementById('sp-buyer').textContent    = buyer;
-  document.getElementById('sp-product').textContent  = product;
-  document.getElementById('sp-amount').textContent   = 'USD$ ' + amount.toFixed(2).replace('.',',');
-  document.getElementById('sp-method').textContent   = payLabels[payMethod] || payMethod;
-  document.getElementById('sp-vendor-chip').textContent = vendor;
-  document.getElementById('sp-date').textContent     = dateStr;
-
-  // Show success state
-  document.getElementById('nvForm').style.display = 'none';
-  document.getElementById('nvSuccess').classList.add('show');
-}
-
-document.getElementById('submitBtn').addEventListener('click', doSubmit);
-
-// Enter key on any form input submits
-['f-buyer','f-product','f-vendor','f-amount'].forEach(id => {
-  document.getElementById(id).addEventListener('keydown', e => {
-    if(e.key === 'Enter') { e.preventDefault(); doSubmit(); }
-  });
-});
-
-function shake(id) {
-  const el = document.getElementById(id);
-  el.style.borderColor = '#E8380D';
-  el.style.animation = 'shake .3s ease';
-  setTimeout(() => { el.style.animation=''; }, 400);
-}
-
-function resetForm() {
-  document.getElementById('f-buyer').value   = '';
-  document.getElementById('f-product').value = '';
-  document.getElementById('f-amount').value  = '';
-  document.getElementById('f-vendor').value  = 'Alessandro Alan…';
-  document.querySelectorAll('.pay-opt').forEach(o => o.classList.remove('selected'));
-  document.querySelector('.pay-opt[data-val="visa"]').classList.add('selected');
-  document.getElementById('nvForm').style.display = '';
-  document.getElementById('nvSuccess').classList.remove('show');
-  setTodayDate();
-  document.getElementById('f-buyer').focus();
-}
 </script>
 </body>
 </html>
-
