@@ -1117,12 +1117,12 @@ function fetchNewSales() {
         seenKeys.add(key);
         lastTs = Math.max(lastTs, d.ts);
         d._fbKey = key;
-        addRowToTable(d);
-        updateTotal(parseFloat(d.amount));
-        updateSessionStats(parseFloat(d.amount));
-        showToast(d.buyer, d.product, d.amount, d.payMethod);
-        sendOneSignalNotification(d.buyer, d.product, parseFloat(d.amount));
-        showPushNotification(d.buyer, d.product, parseFloat(d.amount));
+        try { addRowToTable(d); } catch(e) { console.error('addRowToTable error:', e); }
+        try { updateTotal(parseFloat(d.amount)); } catch(e) { console.error('updateTotal error:', e); }
+        try { updateSessionStats(parseFloat(d.amount)); } catch(e) { console.error('updateSessionStats error:', e); }
+        try { showToast(d.buyer, d.product, d.amount, d.payMethod); } catch(e) { console.error('showToast error:', e); }
+        try { sendOneSignalNotification(d.buyer, d.product, parseFloat(d.amount)); } catch(e) {}
+        try { showPushNotification(d.buyer, d.product, parseFloat(d.amount)); } catch(e) {}
       });
     })
     .catch(() => {});
