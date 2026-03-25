@@ -1,0 +1,552 @@
+{% extends 'base.html' %}
+{% block title %}Menú — Mi Restaurante Delivery{% endblock %}
+
+{% block extra_style %}
+/* ─── Colores ─── */
+:root { --primary:#FF6B35; --primary-d:#E55A26; }
+
+/* ─── Hero banner ─── */
+.menu-hero {
+  background: linear-gradient(135deg, #FF6B35 0%, #c0392b 100%);
+  color: #fff; padding: 3.5rem 1rem; text-align: center;
+}
+.menu-hero h2 { font-weight: 800; font-size: 2.2rem; margin-bottom: .5rem; }
+
+/* ─── Promo cards ─── */
+.promo-card {
+  border: none; border-radius: 20px; overflow: hidden;
+  background: linear-gradient(135deg, #fff7f0, #fff);
+  box-shadow: 0 4px 20px rgba(255,107,53,.15);
+  border-left: 5px solid var(--primary);
+  transition: transform .25s, box-shadow .25s;
+}
+.promo-card:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(255,107,53,.25); }
+.promo-badge {
+  background: var(--primary); color: #fff;
+  border-radius: 50px; padding: 3px 12px; font-size: .78rem; font-weight: 700;
+}
+.promo-emoji { font-size: 3rem; line-height: 1; }
+
+/* ─── Section heading ─── */
+.section-title {
+  font-weight: 800; font-size: 1.6rem; margin-bottom: 1.5rem;
+  display: flex; align-items: center; gap: .6rem;
+}
+.section-divider { height: 3px; background: linear-gradient(90deg,var(--primary),transparent); border-radius: 2px; margin-bottom: 2rem; }
+
+/* ─── Menu item card ─── */
+.item-card {
+  background: #fff; border: none; border-radius: 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.07);
+  transition: transform .25s, box-shadow .25s;
+  overflow: hidden; cursor: pointer; height: 100%;
+}
+.item-card:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(0,0,0,.13); }
+.item-emoji { font-size: 3.5rem; text-align: center; padding: 1.2rem 0 .5rem; background: #fff8f5; }
+.item-body  { padding: 1rem 1.2rem 1.4rem; }
+.item-name  { font-weight: 700; font-size: 1.05rem; color: #1e1e1e; margin-bottom: .3rem; }
+.item-desc  { font-size: .82rem; color: #777; line-height: 1.4; margin-bottom: .8rem;
+              display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.item-price { font-size: 1.3rem; font-weight: 800; color: var(--primary); }
+.btn-add {
+  background: var(--primary); color: #fff; border: none; border-radius: 50px;
+  padding: .45rem 1.2rem; font-weight: 600; font-size: .88rem;
+  transition: background .2s, transform .15s;
+}
+.btn-add:hover { background: var(--primary-d); transform: scale(1.05); }
+
+/* ─── Cart sidebar ─── */
+.cart-sidebar {
+  position: sticky; top: 90px;
+  background: #fff; border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.1);
+  padding: 1.5rem; max-height: 80vh; overflow-y: auto;
+}
+.cart-empty { text-align: center; color: #bbb; padding: 2rem 0; }
+.cart-item   { border-bottom: 1px solid #f0f0f0; padding: .7rem 0; }
+.cart-item:last-child { border-bottom: none; }
+.btn-checkout {
+  background: var(--primary); color: #fff; border: none; border-radius: 50px;
+  padding: .8rem; font-weight: 700; font-size: 1rem; width: 100%;
+  transition: background .2s, transform .15s;
+}
+.btn-checkout:hover { background: var(--primary-d); transform: translateY(-2px); }
+
+/* ─── Modal ─── */
+.modal-header { background: linear-gradient(135deg, var(--primary), #c0392b); color: #fff; border-radius: 16px 16px 0 0; }
+.modal-content { border-radius: 16px; border: none; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+.option-group { margin-bottom: 1.2rem; }
+.option-label { font-weight: 700; font-size: .9rem; margin-bottom: .5rem; }
+.option-badge { font-size: .72rem; border-radius: 50px; }
+.form-check-label { font-size: .9rem; cursor: pointer; }
+.qty-control { display: flex; align-items: center; gap: .5rem; }
+.qty-btn { background: #f0f0f0; border: none; border-radius: 50%; width: 34px; height: 34px;
+           font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: background .2s; }
+.qty-btn:hover { background: var(--primary); color: #fff; }
+{% endblock %}
+
+{% block content %}
+
+<!-- Hero -->
+<div class="menu-hero">
+  <h2>🍽️ Nuestro Menú</h2>
+  <p class="mb-0 opacity-90">Elige tus platos favoritos y los llevamos hasta tu puerta</p>
+</div>
+
+<div class="container-fluid px-3 px-lg-4 py-4">
+  <div class="row g-4">
+
+    <!-- ════════════════ MENÚ PRINCIPAL ════════════════ -->
+    <div class="col-lg-9">
+
+      <!-- ── PROMOCIONES DEL DÍA ── -->
+      {% if promos %}
+      <div class="mb-5">
+        <div class="section-title">
+          <span>🔥</span> Promociones del Día
+        </div>
+        <div class="section-divider"></div>
+        <div class="row g-3">
+          {% for p in promos %}
+          <div class="col-md-4">
+            <div class="promo-card p-3 h-100 d-flex flex-column justify-content-between"
+                 style="cursor:pointer"
+                 onclick="openItemModal({{ p.item_id }}, {{ p.promo_price if p.promo_price else (p.original_price * (1 - p.discount_percent/100)) | round(2) }})">
+              <div>
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <span class="promo-badge">{{ p.badge }}</span>
+                  <span class="promo-emoji">{{ p.emoji }}</span>
+                </div>
+                <h6 class="fw-bold mb-1" style="font-size:.95rem;">{{ p.title }}</h6>
+                <p class="text-muted mb-2" style="font-size:.8rem;">{{ p.description }}</p>
+              </div>
+              <div class="d-flex align-items-center justify-content-between mt-auto">
+                {% if p.promo_price %}
+                  <div>
+                    <span class="text-muted text-decoration-line-through" style="font-size:.8rem;">
+                      S/ {{ '%.2f' % p.original_price }}
+                    </span>
+                    <span class="fw-bold ms-1" style="color:var(--primary);font-size:1.15rem;">
+                      S/ {{ '%.2f' % p.promo_price }}
+                    </span>
+                  </div>
+                {% elif p.discount_percent %}
+                  <div>
+                    <span class="text-muted text-decoration-line-through" style="font-size:.8rem;">
+                      S/ {{ '%.2f' % p.original_price }}
+                    </span>
+                    <span class="fw-bold ms-1" style="color:var(--primary);font-size:1.15rem;">
+                      S/ {{ '%.2f' % (p.original_price * (1 - p.discount_percent/100)) }}
+                    </span>
+                  </div>
+                {% endif %}
+                <button class="btn-add ms-2">
+                  <i class="fas fa-plus me-1"></i>Agregar
+                </button>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- ── PLATOS A LA CARTA ── -->
+      <div class="mb-5" id="section-platos">
+        <div class="section-title">
+          <span>🍽️</span> Platos a la Carta
+        </div>
+        <div class="section-divider"></div>
+        <div class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-3">
+          {% for item in platos %}
+          <div class="col">
+            <div class="item-card" onclick="openItemModal({{ item.id }})">
+              <div class="item-emoji">{{ item.emoji }}</div>
+              <div class="item-body">
+                <div class="item-name">{{ item.name }}</div>
+                <div class="item-desc">{{ item.description }}</div>
+                <div class="d-flex justify-content-between align-items-center mt-auto">
+                  <span class="item-price">S/ {{ '%.2f' % item.price }}</span>
+                  <button class="btn-add">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- ── BEBIDAS ── -->
+      <div class="mb-4" id="section-bebidas">
+        <div class="section-title">
+          <span>🥤</span> Bebidas
+        </div>
+        <div class="section-divider"></div>
+        <div class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-3">
+          {% for item in bebidas %}
+          <div class="col">
+            <div class="item-card" onclick="openItemModal({{ item.id }})">
+              <div class="item-emoji">{{ item.emoji }}</div>
+              <div class="item-body">
+                <div class="item-name">{{ item.name }}</div>
+                <div class="item-desc">{{ item.description }}</div>
+                <div class="d-flex justify-content-between align-items-center mt-auto">
+                  <span class="item-price">S/ {{ '%.2f' % item.price }}</span>
+                  <button class="btn-add">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div><!-- /col-lg-9 -->
+
+    <!-- ════════════════ CARRITO ════════════════ -->
+    <div class="col-lg-3 d-none d-lg-block">
+      <div class="cart-sidebar">
+        <h6 class="fw-bold mb-3">
+          <i class="fas fa-shopping-bag me-2" style="color:var(--primary);"></i>
+          Mi Pedido <span class="badge rounded-pill ms-1" id="cart-total-qty"
+                          style="background:var(--primary);">0</span>
+        </h6>
+
+        <div id="cart-items-list">
+          <div class="cart-empty" id="cart-empty-msg">
+            <i class="fas fa-utensils fa-2x mb-2 d-block"></i>
+            <small>Agrega platos para<br>comenzar tu pedido</small>
+          </div>
+        </div>
+
+        <hr class="my-3" />
+        <div class="d-flex justify-content-between small text-muted mb-1">
+          <span>Subtotal</span>
+          <span id="cart-subtotal">S/ 0.00</span>
+        </div>
+        <div class="d-flex justify-content-between small text-muted mb-2">
+          <span>Delivery</span>
+          <span>S/ 5.00</span>
+        </div>
+        <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
+          <span>Total</span>
+          <span id="cart-total" style="color:var(--primary);">S/ 5.00</span>
+        </div>
+
+        <button class="btn-checkout" id="btn-checkout" onclick="goToCheckout()">
+          <i class="fas fa-arrow-right me-2"></i>Ir a pagar
+        </button>
+        <button class="btn btn-link text-muted w-100 mt-2 small" onclick="clearCart()">
+          <i class="fas fa-trash me-1"></i>Vaciar carrito
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /row -->
+</div>
+
+<!-- ════ CARRITO FLOTANTE (móvil) ════ -->
+<div id="cart-fab" class="d-lg-none"
+     style="position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;display:none!important;">
+  <button class="btn-checkout shadow-lg px-4 py-3 position-relative" onclick="goToCheckout()">
+    <i class="fas fa-shopping-bag me-2"></i>Ver pedido
+    <span class="cart-badge position-absolute" id="cart-fab-badge" style="top:-8px;right:-8px;">0</span>
+  </button>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!--  MODAL — Personalizar Plato / Bebida   -->
+<!-- ════════════════════════════════════════ -->
+<div class="modal fade" id="itemModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <div>
+          <span id="modal-emoji" style="font-size:2rem;"></span>
+          <h5 class="modal-title d-inline ms-2 fw-bold" id="modal-name"></h5>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body p-4">
+        <p id="modal-desc" class="text-muted small mb-3"></p>
+
+        <!-- Opciones dinámicas -->
+        <div id="modal-options"></div>
+
+        <!-- Cantidad -->
+        <div class="mt-4 d-flex align-items-center justify-content-between">
+          <span class="fw-semibold">Cantidad</span>
+          <div class="qty-control">
+            <button class="qty-btn" onclick="changeQty(-1)">−</button>
+            <span id="modal-qty" class="fw-bold fs-5 px-2">1</span>
+            <button class="qty-btn" onclick="changeQty(1)">+</button>
+          </div>
+        </div>
+
+        <!-- Nota especial -->
+        <div class="mt-3">
+          <label class="fw-semibold small mb-1">Nota especial <span class="text-muted">(opcional)</span></label>
+          <textarea id="modal-note" class="form-control" rows="2"
+                    placeholder="Ej: sin sal, extra limón, alergia a maní..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer d-flex justify-content-between align-items-center">
+        <span class="fw-bold fs-5" style="color:var(--primary);">
+          S/ <span id="modal-total-price">0.00</span>
+        </span>
+        <button class="btn-add px-4 py-2" onclick="addToCart()">
+          <i class="fas fa-shopping-bag me-2"></i>Agregar al pedido
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ─────────────────────────────────────────────────────────────
+//  Estado local del carrito
+// ─────────────────────────────────────────────────────────────
+let cart = [];
+let currentItem = null;
+let currentPromoPrice = null;
+let modalQty = 1;
+
+// Cargar carrito al iniciar
+(async () => {
+  const r = await fetch('/api/cart');
+  cart = await r.json();
+  renderCart();
+})();
+
+// ─────────────────────────────────────────────────────────────
+//  MODAL — Abrir y configurar
+// ─────────────────────────────────────────────────────────────
+async function openItemModal(itemId, promoPrice = null) {
+  currentPromoPrice = promoPrice;
+  modalQty = 1;
+
+  const r = await fetch(`/api/item/${itemId}`);
+  currentItem = await r.json();
+
+  document.getElementById('modal-emoji').textContent = currentItem.emoji || '🍽️';
+  document.getElementById('modal-name').textContent  = currentItem.name;
+  document.getElementById('modal-desc').textContent  = currentItem.description || '';
+  document.getElementById('modal-qty').textContent   = 1;
+  document.getElementById('modal-note').value        = '';
+
+  // Opciones
+  const container = document.getElementById('modal-options');
+  container.innerHTML = '';
+  (currentItem.options || []).forEach((opt, gi) => {
+    const div = document.createElement('div');
+    div.className = 'option-group';
+    div.innerHTML = `
+      <div class="option-label mb-1">
+        ${opt.name}
+        ${opt.required
+          ? '<span class="badge bg-danger option-badge">Requerido</span>'
+          : '<span class="badge bg-secondary option-badge">Opcional</span>'}
+      </div>`;
+
+    opt.options.forEach((o, oi) => {
+      const inputType = opt.type === 'radio' ? 'radio' : 'checkbox';
+      const name = `opt_${gi}`;
+      const id   = `opt_${gi}_${oi}`;
+      div.innerHTML += `
+        <div class="form-check mb-1">
+          <input class="form-check-input" type="${inputType}" name="${name}" id="${id}" value="${o}" />
+          <label class="form-check-label" for="${id}">${o}</label>
+        </div>`;
+    });
+    container.appendChild(div);
+  });
+
+  updateModalPrice();
+  new bootstrap.Modal(document.getElementById('itemModal')).show();
+}
+
+function updateModalPrice() {
+  if (!currentItem) return;
+  const base = currentPromoPrice !== null ? currentPromoPrice : currentItem.price;
+  const total = (base * modalQty).toFixed(2);
+  document.getElementById('modal-total-price').textContent = total;
+}
+
+function changeQty(delta) {
+  modalQty = Math.max(1, modalQty + delta);
+  document.getElementById('modal-qty').textContent = modalQty;
+  updateModalPrice();
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Agregar al carrito
+// ─────────────────────────────────────────────────────────────
+async function addToCart() {
+  if (!currentItem) return;
+
+  // Validar required
+  const groups = currentItem.options || [];
+  for (let gi = 0; gi < groups.length; gi++) {
+    const g = groups[gi];
+    if (g.required && g.type === 'radio') {
+      const selected = document.querySelector(`input[name="opt_${gi}"]:checked`);
+      if (!selected) {
+        alert(`Por favor selecciona "${g.name}"`);
+        return;
+      }
+    }
+  }
+
+  // Recopilar selecciones
+  const selectedOpts = {};
+  groups.forEach((g, gi) => {
+    if (g.type === 'radio') {
+      const sel = document.querySelector(`input[name="opt_${gi}"]:checked`);
+      if (sel) selectedOpts[g.name] = sel.value;
+    } else {
+      const sels = [...document.querySelectorAll(`input[name="opt_${gi}"]:checked`)];
+      if (sels.length) selectedOpts[g.name] = sels.map(s => s.value);
+    }
+  });
+
+  const note  = document.getElementById('modal-note').value.trim();
+  const price = currentPromoPrice !== null ? currentPromoPrice : currentItem.price;
+
+  const payload = {
+    id:       currentItem.id,
+    name:     currentItem.name,
+    emoji:    currentItem.emoji,
+    price:    price,
+    qty:      modalQty,
+    options:  selectedOpts,
+    note:     note,
+  };
+
+  const r = await fetch('/api/cart/add', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const data = await r.json();
+  cart = data.cart;
+  renderCart();
+
+  bootstrap.Modal.getInstance(document.getElementById('itemModal')).hide();
+
+  // Toast
+  showToast(`¡${currentItem.name} agregado! 🎉`);
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Eliminar del carrito
+// ─────────────────────────────────────────────────────────────
+async function removeCartItem(idx) {
+  const r = await fetch(`/api/cart/remove/${idx}`, { method: 'DELETE' });
+  const data = await r.json();
+  cart = data.cart;
+  renderCart();
+}
+
+async function clearCart() {
+  await fetch('/api/cart/clear', { method: 'DELETE' });
+  cart = [];
+  renderCart();
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Render carrito
+// ─────────────────────────────────────────────────────────────
+function renderCart() {
+  const list    = document.getElementById('cart-items-list');
+  const emptyEl = document.getElementById('cart-empty-msg');
+  const qtyEl   = document.getElementById('cart-total-qty');
+  const subEl   = document.getElementById('cart-subtotal');
+  const totEl   = document.getElementById('cart-total');
+  const fab     = document.getElementById('cart-fab');
+  const fabBadge= document.getElementById('cart-fab-badge');
+  const nbBadge = document.getElementById('cart-count-badge');
+
+  const totalQty  = cart.reduce((s,i) => s + (i.qty||1), 0);
+  const subtotal  = cart.reduce((s,i) => s + (i.price||0)*(i.qty||1), 0);
+  const total     = subtotal + 5;
+
+  // Badges
+  if (qtyEl)   qtyEl.textContent  = totalQty;
+  if (subEl)   subEl.textContent  = 'S/ ' + subtotal.toFixed(2);
+  if (totEl)   totEl.textContent  = 'S/ ' + total.toFixed(2);
+  if (nbBadge) nbBadge.textContent = totalQty;
+
+  // FAB móvil
+  if (fab) fab.style.display = totalQty > 0 ? 'block' : 'none';
+  if (fabBadge) fabBadge.textContent = totalQty;
+
+  if (cart.length === 0) {
+    list.innerHTML = `<div class="cart-empty" id="cart-empty-msg">
+      <i class="fas fa-utensils fa-2x mb-2 d-block"></i>
+      <small>Agrega platos para<br>comenzar tu pedido</small>
+    </div>`;
+    return;
+  }
+
+  let html = '';
+  cart.forEach((item, idx) => {
+    const opts = Object.entries(item.options || {})
+      .map(([k,v]) => `${k}: ${Array.isArray(v)?v.join(', '):v}`)
+      .join(' · ');
+    html += `
+      <div class="cart-item">
+        <div class="d-flex justify-content-between align-items-start">
+          <div class="flex-grow-1">
+            <span class="fw-semibold" style="font-size:.9rem;">
+              ${item.emoji||''} ${item.name}
+              <span class="text-muted small"> ×${item.qty||1}</span>
+            </span>
+            ${opts ? `<div class="text-muted" style="font-size:.74rem;">${opts}</div>` : ''}
+            ${item.note ? `<div class="text-muted fst-italic" style="font-size:.74rem;">📝 ${item.note}</div>` : ''}
+          </div>
+          <div class="text-end ms-2">
+            <div class="fw-bold" style="color:var(--primary);font-size:.9rem;">
+              S/ ${((item.price||0)*(item.qty||1)).toFixed(2)}
+            </div>
+            <button class="btn btn-link text-danger p-0" style="font-size:.75rem;" onclick="removeCartItem(${idx})">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      </div>`;
+  });
+  list.innerHTML = html;
+}
+
+function goToCheckout() {
+  if (cart.length === 0) {
+    showToast('Tu carrito está vacío 😅', 'warning');
+    return;
+  }
+  window.location.href = '/checkout';
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Toast
+// ─────────────────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = `alert alert-${type === 'warning' ? 'warning' : 'success'} shadow-lg`;
+  toast.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:9999;min-width:260px;text-align:center;border-radius:50px;font-weight:600;';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2500);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/hotmart-transactions.html" },
+    { "source": "/ventas", "destination": "/nueva-venta.html" }
+  ]
+}

@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reservar cita</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8f6f1; --bg2:#ffffff; --bg3:#f3f0e8;
+  --accent:#2d6a4f; --accent2:#40916c; --accent3:#52b788;
+  --purple:#6c47ff; --gold:#e9a825;
+  --text:#1a1a1a; --text2:#6b7280; --text3:#9ca3af;
+  --border:#e0dbd0; --shadow:rgba(45,106,79,0.12);
+  --danger:#dc2626; --success:#2d6a4f;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* HEADER */
+.header{background:#fff;border-bottom:1px solid var(--border);padding:1rem 1.5rem;display:flex;align-items:center;gap:.8rem;}
+.header-av{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;color:#fff;flex-shrink:0;}
+.header-name{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:700;}
+.header-type{font-size:.75rem;color:var(--text2);}
+.zenda-badge{margin-left:auto;font-size:.7rem;color:var(--text2);display:flex;align-items:center;gap:.3rem;}
+.zenda-badge span{font-weight:700;color:var(--purple);}
+
+/* PROGRESS */
+.progress-wrap{background:#fff;border-bottom:1px solid var(--border);padding:.8rem 1.5rem;}
+.progress-steps{display:flex;gap:0;max-width:600px;margin:0 auto;}
+.progress-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:.3rem;position:relative;}
+.progress-step::after{content:'';position:absolute;top:14px;left:50%;width:100%;height:2px;background:var(--border);z-index:0;}
+.progress-step:last-child::after{display:none;}
+.step-circle{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;background:var(--bg3);color:var(--text2);border:2px solid var(--border);position:relative;z-index:1;transition:.3s;}
+.progress-step.active .step-circle{background:var(--accent);color:#fff;border-color:var(--accent);}
+.progress-step.done .step-circle{background:var(--accent3);color:#fff;border-color:var(--accent3);}
+.step-label{font-size:.65rem;font-weight:600;color:var(--text2);text-align:center;line-height:1.2;}
+.progress-step.active .step-label{color:var(--accent);font-weight:700;}
+
+/* MAIN */
+.main{max-width:640px;margin:0 auto;padding:1.5rem;}
+
+/* STEP PANELS */
+.step-panel{display:none;}
+.step-panel.active{display:block;animation:fadeUp .3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.step-title{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:700;margin-bottom:.3rem;}
+.step-sub{font-size:.88rem;color:var(--text2);margin-bottom:1.5rem;font-weight:300;}
+
+/* SERVICIOS */
+.servicios-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:1.5rem;}
+.servicio-card{background:#fff;border:2px solid var(--border);border-radius:16px;padding:1.1rem;cursor:pointer;transition:.25s;}
+.servicio-card:hover{border-color:var(--accent3);}
+.servicio-card.selected{border-color:var(--accent);background:rgba(45,106,79,.04);}
+.serv-icon{font-size:1.6rem;margin-bottom:.5rem;}
+.serv-name{font-weight:700;font-size:.9rem;margin-bottom:.2rem;}
+.serv-info{display:flex;justify-content:space-between;align-items:center;margin-top:.5rem;}
+.serv-price{font-family:'JetBrains Mono',monospace;font-size:.82rem;font-weight:700;color:var(--accent);}
+.serv-dur{font-size:.72rem;color:var(--text2);}
+
+/* DOCTORES */
+.doctores-list{display:flex;flex-direction:column;gap:.7rem;margin-bottom:1.5rem;}
+.doctor-item{background:#fff;border:2px solid var(--border);border-radius:14px;padding:.9rem 1.1rem;cursor:pointer;display:flex;align-items:center;gap:.9rem;transition:.25s;}
+.doctor-item:hover{border-color:var(--accent3);}
+.doctor-item.selected{border-color:var(--accent);background:rgba(45,106,79,.04);}
+.doc-av{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#fff;flex-shrink:0;}
+.doc-name{font-weight:700;font-size:.9rem;}
+.doc-esp{font-size:.78rem;color:var(--text2);}
+.doc-check{margin-left:auto;font-size:1.1rem;opacity:0;}
+.doctor-item.selected .doc-check{opacity:1;}
+
+/* FECHA */
+.cal-wrap{background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.2rem;margin-bottom:1rem;}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
+.cal-nav-btn{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.35rem .75rem;cursor:pointer;font-size:.9rem;transition:.2s;}
+.cal-nav-btn:hover{border-color:var(--accent);color:var(--accent);}
+.cal-month-title{font-family:'Fraunces',serif;font-size:1rem;font-weight:700;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-dow{text-align:center;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);font-weight:700;padding:.4rem 0;}
+.cal-d{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:.82rem;font-weight:600;cursor:pointer;transition:.2s;border:2px solid transparent;}
+.cal-d:hover:not(.disabled):not(.other-m){background:var(--bg3);}
+.cal-d.today{border-color:var(--accent3);}
+.cal-d.selected{background:var(--accent);color:#fff;border-color:var(--accent);}
+.cal-d.disabled{opacity:.3;cursor:not-allowed;pointer-events:none;}
+.cal-d.other-m{opacity:.2;cursor:default;pointer-events:none;}
+.cal-d.has-slots{position:relative;}
+.cal-d.has-slots::after{content:'';position:absolute;bottom:2px;width:4px;height:4px;border-radius:50%;background:var(--accent3);}
+
+.slots-wrap{background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.2rem;margin-bottom:1.5rem;}
+.slots-title{font-size:.82rem;font-weight:700;color:var(--text2);margin-bottom:.8rem;text-transform:uppercase;letter-spacing:.06em;}
+.slots-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;}
+.day-appt-item{background:var(--bg3);border:2px solid var(--border);border-radius:10px;padding:.5rem .3rem;text-align:center;cursor:pointer;transition:.25s;}
+.day-appt-item:hover:not(.booked){border-color:var(--accent3);background:rgba(82,183,136,.1);}
+.day-appt-item.selected-slot{background:var(--accent);border-color:var(--accent);color:#fff;}
+.day-appt-item.booked{opacity:.35;cursor:not-allowed;text-decoration:line-through;}
+.slot-hour{font-family:'JetBrains Mono',monospace;font-size:.8rem;font-weight:600;}
+
+/* SELECTED BAR */
+.selected-bar{background:rgba(45,106,79,.08);border:1px solid rgba(45,106,79,.2);border-radius:10px;padding:.65rem 1rem;margin-bottom:1.5rem;font-size:.85rem;font-weight:600;color:var(--accent);display:none;}
+.selected-bar.show{display:block;}
+
+/* DATOS FORM */
+.form-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.3rem;margin-bottom:1.2rem;}
+.form-card-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);margin-bottom:1rem;}
+.form-group{margin-bottom:.9rem;}
+.form-group label{display:block;font-size:.75rem;font-weight:700;color:var(--text2);margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.05em;}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:.75rem .9rem;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);font-family:'DM Sans',sans-serif;font-size:.92rem;color:var(--text);outline:none;transition:.25s;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--shadow);}
+.form-group input.err{border-color:var(--danger);}
+.err-msg{font-size:.75rem;color:var(--danger);margin-top:.3rem;display:none;}
+.err-msg.show{display:block;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;}
+.privacy-row{display:flex;align-items:flex-start;gap:.7rem;padding:.7rem;background:var(--bg3);border-radius:10px;}
+.privacy-row input{width:auto;flex-shrink:0;margin-top:.1rem;}
+.privacy-row label{font-size:.8rem;color:var(--text2);font-weight:400;text-transform:none;letter-spacing:0;}
+
+/* RESUMEN */
+.summary-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.2rem;margin-bottom:1rem;}
+.summary-row{display:flex;justify-content:space-between;padding:.55rem 0;border-bottom:1px solid var(--border);font-size:.88rem;}
+.summary-row:last-child{border-bottom:none;}
+.summary-label{color:var(--text2);}
+.summary-val{font-weight:600;}
+
+/* CONFIRMACIÓN */
+.confirm-hero{text-align:center;padding:2rem 1rem;}
+.confirm-check{width:70px;height:70px;background:rgba(45,106,79,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 1rem;}
+.confirm-title{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:700;margin-bottom:.5rem;}
+.confirm-sub{color:var(--text2);font-size:.9rem;font-weight:300;}
+.confirm-code{font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:700;color:var(--accent);background:rgba(45,106,79,.08);padding:.6rem 1.4rem;border-radius:10px;display:inline-block;margin:1rem 0;border:1px solid rgba(45,106,79,.2);}
+
+/* YAPE BOX */
+.yape-box{background:linear-gradient(135deg,#6c35d6,#8b47ff);border-radius:16px;padding:1.5rem;color:#fff;margin-bottom:1.2rem;text-align:center;}
+.yape-title{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;opacity:.75;margin-bottom:.7rem;}
+.yape-num{font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:700;letter-spacing:.05em;margin-bottom:.2rem;}
+.yape-name{font-size:.82rem;opacity:.8;margin-bottom:.6rem;}
+.yape-amount{font-size:2rem;font-weight:800;font-family:'Fraunces',serif;}
+.yape-amount span{font-size:.9rem;font-weight:400;opacity:.7;}
+.yape-note{font-size:.78rem;opacity:.65;margin-top:.5rem;line-height:1.5;}
+.yape-actions{display:flex;gap:.7rem;margin-top:1rem;}
+.yape-btn{flex:1;padding:.65rem;border-radius:10px;font-size:.82rem;font-weight:700;cursor:pointer;transition:.2s;font-family:'DM Sans',sans-serif;border:none;}
+.yape-wa{background:#25d366;color:#fff;}
+.yape-copy{background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3)!important;}
+
+/* BOTONES NAV */
+.nav-btns{display:flex;gap:.7rem;margin-top:.5rem;}
+.btn-back{flex:1;background:#fff;border:1.5px solid var(--border);color:var(--text);border-radius:12px;padding:.85rem;font-size:.92rem;font-weight:600;cursor:pointer;transition:.2s;font-family:'DM Sans',sans-serif;}
+.btn-back:hover{border-color:var(--accent);color:var(--accent);}
+.btn-next{flex:2;background:var(--accent);border:none;color:#fff;border-radius:12px;padding:.85rem;font-size:.92rem;font-weight:700;cursor:pointer;transition:.3s;font-family:'DM Sans',sans-serif;box-shadow:0 6px 20px var(--shadow);}
+.btn-next:hover{background:var(--accent2);box-shadow:0 10px 30px var(--shadow);}
+.btn-next:disabled{opacity:.4;cursor:not-allowed;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header" id="pageHeader">
+  <div class="header-av" id="headerAv" style="background:#2d6a4f">Z</div>
+  <div>
+    <div class="header-name" id="headerName">Cargando...</div>
+    <div class="header-type" id="headerType">—</div>
+  </div>
+  <div class="zenda-badge">Powered by <span>Zenda</span></div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-wrap">
+  <div class="progress-steps">
+    <div class="progress-step active" id="prog-1"><div class="step-circle">1</div><div class="step-label">Servicio</div></div>
+    <div class="progress-step" id="prog-2"><div class="step-circle">2</div><div class="step-label">Doctor</div></div>
+    <div class="progress-step" id="prog-3"><div class="step-circle">3</div><div class="step-label">Fecha y hora</div></div>
+    <div class="progress-step" id="prog-4"><div class="step-circle">4</div><div class="step-label">Tus datos</div></div>
+    <div class="progress-step" id="prog-5"><div class="step-circle">5</div><div class="step-label">Confirmar</div></div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- PASO 1: SERVICIO -->
+  <div class="step-panel active" id="step-1">
+    <div class="step-title">¿Qué servicio necesitas?</div>
+    <p class="step-sub">Selecciona el tipo de atención que buscas</p>
+    <div class="servicios-grid" id="serviciosGrid"></div>
+    <div class="nav-btns"><button class="btn-next" onclick="goStep(2)" id="btnNext1" disabled>Continuar →</button></div>
+  </div>
+
+  <!-- PASO 2: DOCTOR -->
+  <div class="step-panel" id="step-2">
+    <div class="step-title">¿Con quién deseas atenderte?</div>
+    <p class="step-sub">Elige un especialista o déjanos asignarte</p>
+    <div class="doctores-list" id="doctoresList"></div>
+    <div class="nav-btns">
+      <button class="btn-back" onclick="goStep(1)">← Volver</button>
+      <button class="btn-next" onclick="goStep(3)" id="btnNext2" disabled>Continuar →</button>
+    </div>
+  </div>
+
+  <!-- PASO 3: FECHA Y HORA -->
+  <div class="step-panel" id="step-3">
+    <div class="step-title">Elige fecha y hora</div>
+    <p class="step-sub">Selecciona el día que más te convenga</p>
+    <div class="cal-wrap">
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="calPrev()">‹</button>
+        <div class="cal-month-title" id="calTitle2"></div>
+        <button class="cal-nav-btn" onclick="calNext()">›</button>
+      </div>
+      <div class="cal-grid" id="calGrid2"></div>
+    </div>
+    <div class="slots-wrap" id="slotsWrap" style="display:none">
+      <div class="slots-title" id="slotsTitle">Horarios disponibles</div>
+      <div class="slots-grid" id="slotsGrid"></div>
+    </div>
+    <div class="selected-bar" id="selectedBar"></div>
+    <div class="nav-btns">
+      <button class="btn-back" onclick="goStep(2)">← Volver</button>
+      <button class="btn-next" onclick="goStep(4)" id="btnNext3" disabled>Continuar →</button>
+    </div>
+  </div>
+
+  <!-- PASO 4: DATOS -->
+  <div class="step-panel" id="step-4">
+    <div class="step-title">Tus datos de contacto</div>
+    <p class="step-sub">Los necesitamos para confirmar tu cita</p>
+    <div class="form-card">
+      <div class="form-card-title">Información personal</div>
+      <div class="form-row">
+        <div class="form-group"><label>Nombre *</label><input type="text" id="fNombre" placeholder="Tu nombre"><div class="err-msg" id="errNombre">Nombre requerido</div></div>
+        <div class="form-group"><label>Apellido *</label><input type="text" id="fApellido" placeholder="Tu apellido"><div class="err-msg" id="errApellido">Apellido requerido</div></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Email *</label><input type="email" id="fEmail" placeholder="tucorreo@..."><div class="err-msg" id="errEmail">Email inválido</div></div>
+        <div class="form-group"><label>Teléfono *</label><input type="tel" id="fTel" placeholder="+51 999 000 000"><div class="err-msg" id="errTel">Teléfono requerido</div></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Fecha de nacimiento</label><input type="date" id="fNac"></div>
+        <div class="form-group"><label>¿Primera visita?</label><select id="fPrimera"><option value="si">Sí, es mi primera vez</option><option value="no">No, ya fui antes</option></select></div>
+      </div>
+      <div class="form-group"><label>Notas o motivo de consulta</label><textarea id="fNotas" rows="2" placeholder="Describe brevemente tu consulta..."></textarea></div>
+      <div class="privacy-row">
+        <input type="checkbox" id="fPrivacy">
+        <label for="fPrivacy">Acepto que mis datos sean usados únicamente para la gestión de esta cita</label>
+      </div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-back" onclick="goStep(3)">← Volver</button>
+      <button class="btn-next" onclick="validarDatos()">Ver resumen →</button>
+    </div>
+  </div>
+
+  <!-- PASO 5: CONFIRMACIÓN -->
+  <div class="step-panel" id="step-5">
+    <div class="confirm-hero">
+      <div class="confirm-check">✅</div>
+      <div class="confirm-title">¡Cita solicitada!</div>
+      <p class="confirm-sub">Completa el pago por Yape y envía tu comprobante para confirmar</p>
+      <div class="confirm-code" id="confirmCode">ZD-000000</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-row"><span class="summary-label">Servicio</span><span class="summary-val" id="confServicio">—</span></div>
+      <div class="summary-row"><span class="summary-label">Doctor</span><span class="summary-val" id="confDoctor">—</span></div>
+      <div class="summary-row"><span class="summary-label">Fecha</span><span class="summary-val" id="confFecha">—</span></div>
+      <div class="summary-row"><span class="summary-label">Hora</span><span class="summary-val" id="confHora">—</span></div>
+      <div class="summary-row"><span class="summary-label">Paciente</span><span class="summary-val" id="confPaciente">—</span></div>
+    </div>
+    <div class="yape-box" id="yapeBox">
+      <div class="yape-title">💜 Pago con Yape</div>
+      <div class="yape-num" id="yapeNum">+51 999 000 000</div>
+      <div class="yape-name" id="yapeName">Titular</div>
+      <div class="yape-amount"><span>S/ </span><span id="yapeAmount">0</span></div>
+      <div class="yape-note">Envía tu comprobante de pago por WhatsApp para confirmar tu cita</div>
+      <div class="yape-actions">
+        <button class="yape-btn yape-wa" id="btnWA" onclick="sendWhatsApp()">💬 WhatsApp</button>
+        <button class="yape-btn yape-copy" onclick="copyYapeNum()">📋 Copiar número</button>
+      </div>
+    </div>
+    <p style="font-size:.78rem;color:var(--text2);text-align:center;line-height:1.6;margin-bottom:1rem">Tu cita será confirmada una vez que el negocio verifique tu comprobante. Puedes cancelar con 24h de anticipación.</p>
+  </div>
+
+</div>
+
+<script type="module">
+import { obtenerNegocio, obtenerPersonal, obtenerHorarios, crearCita } from './firebase.js';
+
+// ── STATE ────────────────────────────────────────────────────
+const params = new URLSearchParams(location.search);
+const negocioId = params.get('negocio');
+
+let state = {
+  negocio: null, personal: [], horarios: {},
+  servicios: [],
+  selServicio: null, selDoctor: null, selFecha: null, selHora: null,
+  calYear: new Date().getFullYear(), calMonth: new Date().getMonth(),
+  currentStep: 1,
+};
+
+// ── SERVICIOS POR TIPO ────────────────────────────────────────
+const serviciosPorTipo = {
+  clinica:    [{icon:'🩺',name:'Consulta general',price:40,dur:'30 min'},{icon:'🔬',name:'Examen preventivo',price:55,dur:'60 min'},{icon:'💊',name:'Revisión de seguimiento',price:25,dur:'20 min'},{icon:'🏥',name:'Consulta especializada',price:70,dur:'45 min'}],
+  salon:      [{icon:'✂️',name:'Corte de cabello',price:25,dur:'45 min'},{icon:'💆',name:'Tratamiento capilar',price:60,dur:'60 min'},{icon:'💅',name:'Manicure & Pedicure',price:35,dur:'90 min'},{icon:'🎨',name:'Tinte / Color',price:80,dur:'120 min'}],
+  dental:     [{icon:'🦷',name:'Limpieza dental',price:50,dur:'45 min'},{icon:'😁',name:'Blanqueamiento',price:150,dur:'60 min'},{icon:'🔧',name:'Extracción',price:80,dur:'30 min'},{icon:'😬',name:'Ortodoncia – consulta',price:60,dur:'30 min'}],
+  psicologia: [{icon:'🧠',name:'Sesión individual',price:80,dur:'50 min'},{icon:'👫',name:'Terapia de pareja',price:100,dur:'60 min'},{icon:'👨‍👩‍👧',name:'Terapia familiar',price:120,dur:'60 min'},{icon:'🌱',name:'Evaluación inicial',price:60,dur:'45 min'}],
+  veterinaria:[{icon:'🐾',name:'Consulta general',price:45,dur:'30 min'},{icon:'💉',name:'Vacunación',price:35,dur:'20 min'},{icon:'🔬',name:'Examen de laboratorio',price:70,dur:'30 min'},{icon:'🛁',name:'Baño y estética',price:40,dur:'60 min'}],
+  otro:       [{icon:'📋',name:'Consulta inicial',price:50,dur:'30 min'},{icon:'🔄',name:'Seguimiento',price:30,dur:'20 min'},{icon:'⭐',name:'Servicio premium',price:90,dur:'60 min'},{icon:'📦',name:'Paquete especial',price:120,dur:'90 min'}],
+};
+
+// ── INIT ─────────────────────────────────────────────────────
+async function init() {
+  if (!negocioId) { document.getElementById('headerName').textContent='Link inválido'; return; }
+  try {
+    state.negocio  = await obtenerNegocio(negocioId);
+    state.personal = await obtenerPersonal(negocioId);
+    state.horarios = await obtenerHorarios(negocioId) || {};
+  } catch(e) { document.getElementById('headerName').textContent='Error de conexión'; return; }
+
+  if (!state.negocio) { document.getElementById('headerName').textContent='Negocio no encontrado'; return; }
+
+  const tipo = state.negocio.tipo || 'clinica';
+  const colores = {clinica:'#2d6a4f',salon:'#c0392b',dental:'#2980b9',psicologia:'#8e44ad',veterinaria:'#e67e22',otro:'#6c47ff'};
+  const color = colores[tipo]||'#6c47ff';
+  const ini = state.negocio.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const tipoLabel = {clinica:'Clínica / Médico',salon:'Salón de belleza',dental:'Odontología',psicologia:'Psicología / Terapia',veterinaria:'Veterinaria',otro:'Negocio'}[tipo]||tipo;
+
+  document.getElementById('headerAv').style.background = color;
+  document.getElementById('headerAv').textContent = ini;
+  document.getElementById('headerName').textContent = state.negocio.nombre;
+  document.getElementById('headerType').textContent = tipoLabel;
+  document.title = `Reservar cita · ${state.negocio.nombre}`;
+
+  state.servicios = serviciosPorTipo[tipo] || serviciosPorTipo.otro;
+  renderServicios();
+  renderDoctores();
+  renderCalendar();
+}
+
+// ── SERVICIOS ─────────────────────────────────────────────────
+function renderServicios() {
+  document.getElementById('serviciosGrid').innerHTML = state.servicios.map((s,i)=>`
+    <div class="servicio-card" id="serv-${i}" onclick="selectServicio(${i})">
+      <div class="serv-icon">${s.icon}</div>
+      <div class="serv-name">${s.name}</div>
+      <div class="serv-info"><span class="serv-price">S/ ${s.price}</span><span class="serv-dur">⏱ ${s.dur}</span></div>
+    </div>`).join('');
+}
+window.selectServicio = (i) => {
+  document.querySelectorAll('.servicio-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('serv-'+i).classList.add('selected');
+  state.selServicio = state.servicios[i];
+  document.getElementById('btnNext1').disabled = false;
+};
+
+// ── DOCTORES ──────────────────────────────────────────────────
+function renderDoctores() {
+  const list = document.getElementById('doctoresList');
+  const items = [{id:'any',nombre:'Sin preferencia',especialidad:'Asignación automática',color:'#9ca3af'},...state.personal];
+  list.innerHTML = items.map(p=>`
+    <div class="doctor-item" id="doc-${p.id}" onclick="selectDoctor('${p.id}','${p.nombre}')">
+      <div class="doc-av" style="background:${p.color||'#6c47ff'}33;color:${p.color||'#6c47ff'}">${p.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+      <div><div class="doc-name">${p.nombre}</div><div class="doc-esp">${p.especialidad||''}</div></div>
+      <div class="doc-check">✓</div>
+    </div>`).join('');
+  selectDoctor('any','Sin preferencia');
+}
+window.selectDoctor = (id, nombre) => {
+  document.querySelectorAll('.doctor-item').forEach(d=>d.classList.remove('selected'));
+  const el = document.getElementById('doc-'+id);
+  if(el) el.classList.add('selected');
+  state.selDoctor = nombre;
+  document.getElementById('btnNext2').disabled = false;
+};
+
+// ── CALENDARIO ───────────────────────────────────────────────
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DIAS  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+function renderCalendar() {
+  const { calYear: y, calMonth: m } = state;
+  document.getElementById('calTitle2').textContent = `${MESES[m]} ${y}`;
+  const grid = document.getElementById('calGrid2');
+  grid.innerHTML = DIAS.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  const first = new Date(y,m,1).getDay();
+  const days  = new Date(y,m+1,0).getDate();
+  const now   = new Date(); now.setHours(0,0,0,0);
+
+  for(let i=0;i<first;i++) {
+    const prev = new Date(y,m,1-first+i);
+    grid.innerHTML += `<div class="cal-d other-m">${prev.getDate()}</div>`;
+  }
+  for(let d=1;d<=days;d++) {
+    const date  = new Date(y,m,d);
+    const dStr  = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow   = date.getDay();
+    const isPast = date < now;
+    const isSun  = dow === 0;
+    const sel    = state.selFecha === dStr;
+    const cls    = ['cal-d', isPast||isSun?'disabled':'', sel?'selected':'', date.toDateString()===now.toDateString()?'today':''].filter(Boolean).join(' ');
+    grid.innerHTML += `<div class="${cls}" onclick="selectDay('${dStr}')">${d}</div>`;
+  }
+}
+window.calPrev = ()=>{ state.calMonth--; if(state.calMonth<0){state.calMonth=11;state.calYear--;} renderCalendar(); };
+window.calNext = ()=>{ state.calMonth++; if(state.calMonth>11){state.calMonth=0;state.calYear++;} renderCalendar(); };
+
+window.selectDay = (dStr) => {
+  state.selFecha = dStr;
+  state.selHora  = null;
+  document.getElementById('btnNext3').disabled = true;
+  document.getElementById('selectedBar').classList.remove('show');
+  renderCalendar();
+  renderSlots(dStr);
+};
+
+function renderSlots(dStr) {
+  const wrap = document.getElementById('slotsWrap');
+  const date = new Date(dStr+'T00:00:00');
+  const DIAS_ES = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
+  const diaKey  = DIAS_ES[date.getDay()];
+  const horario = state.horarios[diaKey];
+
+  if (!horario || !horario.activo || !horario.slots?.length) {
+    wrap.style.display = 'block';
+    document.getElementById('slotsGrid').innerHTML = '<div style="color:var(--text2);font-size:.85rem;grid-column:1/-1;padding:.5rem">No hay atención este día</div>';
+    return;
+  }
+
+  // Generar slots individuales cada 30min a partir de rangos
+  const slots = [];
+  horario.slots.forEach(range => {
+    const [from, to] = range.split('-');
+    const [fh,fm] = from.split(':').map(Number);
+    const [th,tm] = to.split(':').map(Number);
+    let cur = fh*60+fm;
+    const end = th*60+tm;
+    while(cur < end) {
+      const h = String(Math.floor(cur/60)).padStart(2,'0');
+      const m = String(cur%60).padStart(2,'0');
+      slots.push(`${h}:${m}`);
+      cur += 30;
+    }
+  });
+
+  const fechaNom = date.toLocaleDateString('es-PE',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('slotsTitle').textContent = `Horarios para el ${fechaNom}`;
+  document.getElementById('slotsGrid').innerHTML = slots.map(s=>`
+    <div class="day-appt-item" id="slot-${s.replace(':','-')}" onclick="selectSlot('${s}')">
+      <div class="slot-hour">${s}</div>
+    </div>`).join('');
+  wrap.style.display = 'block';
+}
+
+window.selectSlot = (hora) => {
+  document.querySelectorAll('.day-appt-item').forEach(d=>d.classList.remove('selected-slot'));
+  const el = document.getElementById('slot-'+hora.replace(':','-'));
+  if(el) el.classList.add('selected-slot');
+  state.selHora = hora;
+  const date = new Date(state.selFecha+'T00:00:00');
+  const fechaLabel = date.toLocaleDateString('es-PE',{weekday:'long',day:'numeric',month:'long'});
+  const bar = document.getElementById('selectedBar');
+  bar.textContent = `✓ ${fechaLabel} · ${hora}`;
+  bar.classList.add('show');
+  document.getElementById('btnNext3').disabled = false;
+};
+
+// ── VALIDAR DATOS ────────────────────────────────────────────
+window.validarDatos = () => {
+  let ok = true;
+  const check = (id, errId, test) => { const val=document.getElementById(id).value.trim(); const bad=!test(val); document.getElementById(id).classList.toggle('err',bad); document.getElementById(errId).classList.toggle('show',bad); if(bad) ok=false; return val; };
+  const nombre   = check('fNombre','errNombre',v=>v.length>1);
+  const apellido = check('fApellido','errApellido',v=>v.length>1);
+  const email    = check('fEmail','errEmail',v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v));
+  const tel      = check('fTel','errTel',v=>v.length>5);
+  if (!document.getElementById('fPrivacy').checked) { alert('Debes aceptar la política de privacidad'); ok=false; }
+  if (!ok) return;
+  confirmarCita(nombre, apellido, email, tel);
+};
+
+// ── CONFIRMAR CITA ────────────────────────────────────────────
+async function confirmarCita(nombre, apellido, email, tel) {
+  const codigo = 'ZD-' + Math.random().toString(36).substr(2,6).toUpperCase();
+  const paciente = `${nombre} ${apellido}`;
+  const cita = {
+    paciente, email, telefono: tel,
+    doctor:  state.selDoctor || 'Sin preferencia',
+    servicio: state.selServicio.name,
+    precio:   state.selServicio.price,
+    fecha:    state.selFecha,
+    hora:     state.selHora,
+    estado:   'waiting',
+    notas:    document.getElementById('fNotas').value.trim(),
+    nacimiento: document.getElementById('fNac').value,
+    primeraVez: document.getElementById('fPrimera').value === 'si',
+    fromClient: true,
+    codigo,
+  };
+
+  try {
+    await crearCita(negocioId, cita);
+  } catch(e) { alert('Error al guardar la cita. Verifica tu conexión.'); return; }
+
+  // Mostrar confirmación
+  document.getElementById('confirmCode').textContent = codigo;
+  document.getElementById('confServicio').textContent = cita.servicio;
+  document.getElementById('confDoctor').textContent   = cita.doctor;
+  const dateObj = new Date(cita.fecha+'T00:00:00');
+  document.getElementById('confFecha').textContent = dateObj.toLocaleDateString('es-PE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('confHora').textContent  = cita.hora;
+  document.getElementById('confPaciente').textContent = paciente;
+
+  // Yape
+  const yape = state.negocio.yape || '+51 999 000 000';
+  const yapeNombre = state.negocio.yapeNombre || state.negocio.nombre;
+  document.getElementById('yapeNum').textContent    = yape;
+  document.getElementById('yapeName').textContent   = yapeNombre;
+  document.getElementById('yapeAmount').textContent = cita.precio;
+
+  // WhatsApp msg
+  const wa = state.negocio.telefono || state.negocio.yape || '';
+  const msg = encodeURIComponent(`Hola! Acabo de agendar una cita en ${state.negocio.nombre}.\n\n📋 Código: ${codigo}\n👤 Paciente: ${paciente}\n🛎 Servicio: ${cita.servicio}\n📅 Fecha: ${cita.fecha} a las ${cita.hora}\n\nAdjunto mi comprobante de Yape ✅`);
+  document.getElementById('btnWA').onclick = () => window.open(`https://wa.me/${wa.replace(/\D/g,'')}?text=${msg}`,'_blank');
+
+  goStep(5);
+}
+
+window.sendWhatsApp = () => {};
+window.copyYapeNum = () => { navigator.clipboard.writeText(document.getElementById('yapeNum').textContent); };
+
+// ── NAVEGACIÓN ────────────────────────────────────────────────
+window.goStep = (n) => {
+  document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('step-'+n).classList.add('active');
+  for(let i=1;i<=5;i++) {
+    const p = document.getElementById('prog-'+i);
+    p.classList.remove('active','done');
+    if(i<n) p.classList.add('done');
+    else if(i===n) p.classList.add('active');
+  }
+  state.currentStep = n;
+  window.scrollTo(0,0);
+};
+
+init();
+</script>
+</body>
+</html>

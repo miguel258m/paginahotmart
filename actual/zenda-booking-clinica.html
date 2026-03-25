@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clínica Vida — Reservar Cita</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f0f5fb;--white:#fff;--b50:#e8f4fd;--b100:#c3e0f8;
+  --b400:#4aadee;--b500:#1e92d8;--b600:#0d7abf;--b700:#0a5f96;
+  --b800:#083f6a;--b900:#052b4a;--teal:#0bc5b0;--teald:#089985;
+  --text:#0a1e35;--text2:#2d5070;--muted:#6b8aaa;--border:#d6e6f5;
+  --green:#10b981;--red:#ef4444;--yellow:#f59e0b;
+  --font:'Sora',sans-serif;--body:'DM Sans',sans-serif;
+  --sh:0 4px 24px rgba(13,122,191,.08);--shm:0 8px 40px rgba(13,122,191,.13);
+  --r:16px;--rsm:10px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--body);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* LAYOUT */
+.page-layout{display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{
+  width:340px;min-width:340px;
+  background:linear-gradient(160deg,var(--b900) 0%,var(--b700) 60%,var(--b500) 100%);
+  display:flex;flex-direction:column;padding:40px 32px;
+  position:sticky;top:0;height:100vh;overflow:hidden;
+}
+.sidebar::before{
+  content:'';position:absolute;top:-100px;right:-100px;
+  width:360px;height:360px;
+  background:radial-gradient(circle,rgba(79,195,247,.16) 0%,transparent 70%);
+  pointer-events:none;
+}
+.sidebar::after{
+  content:'';position:absolute;bottom:-80px;left:-60px;
+  width:280px;height:280px;
+  background:radial-gradient(circle,rgba(11,197,176,.13) 0%,transparent 70%);
+  pointer-events:none;
+}
+.si{position:relative;z-index:1;display:flex;flex-direction:column;height:100%}
+
+.logo-row{display:flex;align-items:center;gap:12px;margin-bottom:40px}
+.logo-img{width:46px;height:46px;border-radius:14px;overflow:hidden;flex-shrink:0;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.logo-img img{width:100%;height:100%;object-fit:cover}
+.logo-name{font-family:var(--font);font-size:17px;font-weight:700;color:#fff}
+.logo-sub{font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.08em;text-transform:uppercase}
+
+.clinic-name{font-family:var(--font);font-size:30px;font-weight:800;color:#fff;line-height:1.15;margin-bottom:6px;letter-spacing:-.5px}
+.clinic-type{font-size:12px;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;font-weight:600;margin-bottom:28px}
+.divider{width:38px;height:3px;background:linear-gradient(90deg,var(--teal),transparent);border-radius:2px;margin-bottom:28px}
+
+.feat{display:flex;align-items:flex-start;gap:13px;margin-bottom:18px}
+.feat-icon{width:36px;height:36px;flex-shrink:0;background:rgba(255,255,255,.1);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.feat-text strong{display:block;font-family:var(--font);font-size:13px;font-weight:600;color:#fff;margin-bottom:2px}
+.feat-text span{font-size:12px;color:rgba(255,255,255,.5);line-height:1.5}
+
+.sb-bottom{margin-top:auto;padding-top:20px;border-top:1px solid rgba(255,255,255,.1)}
+.sb-bottom p{font-size:12px;color:rgba(255,255,255,.35);line-height:1.5}
+.sb-brand{display:flex;align-items:center;gap:5px;margin-top:8px}
+.sb-brand span{font-size:12px;color:rgba(255,255,255,.3)}
+.sb-brand strong{font-family:var(--font);font-size:13px;color:var(--teal);font-weight:700}
+
+/* MOBILE HEADER */
+.mob-header{display:none;background:linear-gradient(135deg,var(--b900),var(--b600));padding:20px 20px 26px;color:#fff}
+.mob-top{display:flex;align-items:center;gap:12px;margin-bottom:0}
+.mob-logo{width:40px;height:40px;border-radius:12px;overflow:hidden;flex-shrink:0}
+.mob-logo img{width:100%;height:100%;object-fit:cover}
+.mob-cn{font-family:var(--font);font-size:18px;font-weight:700}
+.mob-ct{font-size:11px;color:rgba(255,255,255,.55);letter-spacing:.08em;text-transform:uppercase}
+
+/* MAIN */
+.main-content{flex:1;display:flex;flex-direction:column;min-height:100vh;overflow-y:auto}
+
+/* STEPS */
+.steps-bar{
+  background:#fff;border-bottom:1px solid var(--border);
+  padding:0 36px;display:flex;align-items:center;
+}
+.step-item{display:flex;align-items:center;gap:9px;padding:16px 18px 16px 0;position:relative;flex:1;cursor:default}
+.step-item:not(:last-child)::after{
+  content:'';position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  width:22px;height:1.5px;background:var(--border);
+}
+.step-item.done:not(:last-child)::after{background:var(--b400)}
+.step-circle{
+  width:30px;height:30px;flex-shrink:0;border-radius:50%;
+  background:var(--border);color:var(--muted);
+  font-family:var(--font);font-size:12px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;
+}
+.step-item.active .step-circle{background:var(--b500);color:#fff;box-shadow:0 4px 14px rgba(30,146,216,.4)}
+.step-item.done .step-circle{background:var(--teal);color:#fff}
+.step-label{font-family:var(--font);font-size:12px;font-weight:600;color:var(--muted)}
+.step-item.active .step-label{color:var(--b600)}
+.step-item.done .step-label{color:var(--teald)}
+
+/* BOOKING BODY */
+.bk-body{flex:1;padding:36px 40px;max-width:780px}
+.sec-title{font-family:var(--font);font-size:21px;font-weight:700;color:var(--text);margin-bottom:4px}
+.sec-sub{font-size:14px;color:var(--muted);margin-bottom:24px}
+
+/* STEP PANELS */
+.step-panel{display:none;animation:fadeIn .3s ease}
+.step-panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* DOCTORS GRID */
+.doctors-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:28px}
+.doctor-card{
+  background:#fff;border:2px solid var(--border);border-radius:var(--r);
+  padding:18px;cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;gap:14px;box-shadow:var(--sh);
+}
+.doctor-card:hover{border-color:var(--b400);box-shadow:var(--shm);transform:translateY(-1px)}
+.doctor-card.selected{border-color:var(--b500);background:var(--b50);box-shadow:0 0 0 4px rgba(30,146,216,.1)}
+.doc-avatar{
+  width:52px;height:52px;flex-shrink:0;border-radius:13px;
+  background:linear-gradient(135deg,var(--b500),var(--b700));
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+}
+.doc-info{flex:1}
+.doc-name{font-family:var(--font);font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px}
+.doc-spec{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:7px}
+.doc-price{
+  display:inline-block;background:var(--b50);border:1px solid var(--b100);
+  color:var(--b600);font-family:var(--font);font-size:11px;font-weight:700;
+  padding:2px 9px;border-radius:20px;
+}
+.doctor-card.selected .doc-price{background:#fff}
+.doc-check{
+  width:22px;height:22px;flex-shrink:0;border-radius:50%;
+  border:2px solid var(--border);display:flex;align-items:center;justify-content:center;
+  transition:all .2s;font-size:11px;color:transparent;
+}
+.doctor-card.selected .doc-check{background:var(--b500);border-color:var(--b500);color:#fff}
+
+/* CALENDAR */
+.cal-wrap{background:#fff;border-radius:var(--r);padding:22px;box-shadow:var(--sh);border:1px solid var(--border);margin-bottom:24px}
+.cal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.cal-mo{font-family:var(--font);font-size:15px;font-weight:700;color:var(--text)}
+.cal-nav{display:flex;gap:7px}
+.cal-btn{
+  width:32px;height:32px;border:1px solid var(--border);background:var(--bg);
+  border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:var(--text2);transition:all .15s;
+}
+.cal-btn:hover{background:var(--b500);color:#fff;border-color:var(--b500)}
+.cal-dnames{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:6px}
+.cal-dn{text-align:center;font-family:var(--font);font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.05em;padding:3px 0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-day{
+  aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+  border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;
+  transition:all .15s;color:var(--text);border:2px solid transparent;
+}
+.cal-day:hover:not(.empty):not(.past){background:var(--b50);border-color:var(--b100)}
+.cal-day.past{color:#ccc;cursor:default}
+.cal-day.empty{cursor:default}
+.cal-day.today{background:var(--b50);color:var(--b600);font-weight:700}
+.cal-day.selected{background:var(--b500);color:#fff;font-weight:700;box-shadow:0 4px 14px rgba(30,146,216,.4)}
+
+/* TIMES */
+.times-sec{margin-bottom:24px}
+.times-label{font-family:var(--font);font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px}
+.times-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+.time-slot{
+  padding:9px 5px;text-align:center;background:#fff;
+  border:1.5px solid var(--border);border-radius:9px;
+  font-family:var(--font);font-size:12px;font-weight:600;color:var(--text2);
+  cursor:pointer;transition:all .15s;box-shadow:var(--sh);
+}
+.time-slot:hover{border-color:var(--b400);color:var(--b500);background:var(--b50)}
+.time-slot.selected{background:var(--b500);border-color:var(--b500);color:#fff;box-shadow:0 4px 14px rgba(30,146,216,.35)}
+.time-slot.taken{background:var(--bg);border-color:var(--border);color:#ccc;cursor:not-allowed;text-decoration:line-through}
+
+/* FORM */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.form-label{font-family:var(--font);font-size:12px;font-weight:600;color:var(--text2)}
+.form-input{
+  padding:11px 13px;border:1.5px solid var(--border);border-radius:9px;
+  font-family:var(--body);font-size:14px;color:var(--text);background:#fff;
+  transition:all .15s;outline:none;box-shadow:0 1px 4px rgba(0,0,0,.04);
+}
+.form-input:focus{border-color:var(--b500);box-shadow:0 0 0 3px rgba(30,146,216,.1)}
+.form-input::placeholder{color:var(--muted)}
+textarea.form-input{resize:vertical;min-height:75px}
+
+/* SUMMARY */
+.sum-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);margin-bottom:24px}
+.sum-hdr{background:linear-gradient(135deg,var(--b900),var(--b700));color:#fff;padding:14px 18px;display:flex;align-items:center;gap:9px}
+.sum-hdr h3{font-family:var(--font);font-size:13px;font-weight:700}
+.sum-body{padding:18px}
+.sum-row{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px dashed var(--border);gap:10px}
+.sum-row:last-child{border-bottom:none;padding-bottom:0}
+.sum-key{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.sum-val{font-size:13px;font-weight:600;color:var(--text);text-align:right}
+.sum-price{font-family:var(--font);font-size:20px;font-weight:800;color:var(--b600)}
+
+/* BUTTONS */
+.btn-row{display:flex;gap:11px;align-items:center}
+.btn-primary{
+  flex:1;padding:14px 26px;
+  background:linear-gradient(135deg,var(--b500),var(--b700));
+  color:#fff;border:none;border-radius:11px;
+  font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;
+  transition:all .2s;box-shadow:0 4px 20px rgba(30,146,216,.35);letter-spacing:.02em;
+}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(30,146,216,.45)}
+.btn-primary:active{transform:translateY(0)}
+.btn-back{
+  padding:14px 18px;background:#fff;border:1.5px solid var(--border);
+  border-radius:11px;font-family:var(--font);font-size:13px;font-weight:600;
+  color:var(--text2);cursor:pointer;transition:all .2s;
+}
+.btn-back:hover{border-color:var(--b400);color:var(--b500)}
+
+/* CONFIRM */
+.confirm-wrap{display:flex;flex-direction:column;align-items:center;text-align:center;padding:36px 20px}
+.confirm-icon{
+  width:76px;height:76px;
+  background:linear-gradient(135deg,var(--teal),var(--teald));
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:32px;margin-bottom:22px;box-shadow:0 8px 32px rgba(11,197,176,.35);
+  animation:popIn .5s cubic-bezier(.16,1,.3,1);
+}
+@keyframes popIn{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+.confirm-title{font-family:var(--font);font-size:26px;font-weight:800;color:var(--text);margin-bottom:8px}
+.confirm-sub{font-size:14px;color:var(--muted);margin-bottom:28px;max-width:380px;line-height:1.6}
+.ticket-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:22px;width:100%;max-width:400px;box-shadow:var(--shm);margin-bottom:24px}
+.tick-hdr{
+  background:linear-gradient(135deg,var(--b900),var(--b600));
+  margin:-22px -22px 18px;padding:14px 22px;border-radius:15px 15px 0 0;
+  display:flex;align-items:center;justify-content:space-between;color:#fff;
+}
+.tick-num{font-family:var(--font);font-size:12px;font-weight:700;opacity:.65}
+.tick-id{font-family:var(--font);font-size:17px;font-weight:800;letter-spacing:.05em;color:var(--teal)}
+.tick-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed var(--border);gap:10px}
+.tick-row:last-child{border-bottom:none;padding-bottom:0}
+.tick-key{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.tick-val{font-size:13px;font-weight:600;color:var(--text);text-align:right}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:22px;right:22px;z-index:9999;
+  background:var(--text);color:#fff;padding:11px 16px;border-radius:11px;
+  font-family:var(--font);font-size:13px;font-weight:600;
+  box-shadow:0 8px 32px rgba(0,0,0,.2);display:none;gap:7px;align-items:center;
+}
+.toast.show{display:flex;animation:toastIn .3s ease}
+@keyframes toastIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* RESPONSIVE MOBILE */
+@media(max-width:900px){
+  .sidebar{display:none}
+  .mob-header{display:block}
+  .steps-bar{padding:0 14px;overflow-x:auto}
+  .step-item{padding:13px 10px 13px 0;min-width:72px}
+  .step-label{font-size:10px}
+  .bk-body{padding:18px 14px;max-width:100%}
+  .doctors-grid{grid-template-columns:1fr}
+  .times-grid{grid-template-columns:repeat(4,1fr)}
+  .form-row{grid-template-columns:1fr}
+  .btn-row{flex-direction:column-reverse}
+  .btn-back{width:100%}
+}
+@media(max-width:480px){
+  .times-grid{grid-template-columns:repeat(3,1fr)}
+  .confirm-title{font-size:21px}
+}
+</style>
+</head>
+<body>
+
+<div class="page-layout">
+
+<!-- SIDEBAR PC -->
+<aside class="sidebar">
+  <div class="si">
+    <div class="logo-row">
+      <div class="logo-img"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAOxAAADsQBlSsOGwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAWnSURBVHic7ZtLiBxFGMf/1T0zO7M7j80mxo2Jj6gYo1FRMIiCqIgHPQgigoiXoJ480IMHQRAPggfx5MWLePHgQQ+CiAeJiAcRUUQRFUVRERFFRBQVUUTxgYrv7vdTtdPd1dXTPT3b3ZnZH3x0d1VX1f/7VX2PqgYAAAAAAAAAAAAAgHHDzCxJuiOhNDNJuiupO1FKp/oe9AAAAABJRU5ErkJggg==" alt="Logo" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#2fffb4,#00c896)';this.parentElement.textContent='Z'"></div>
+      <div>
+        <div class="logo-name">Zenda</div>
+        <div class="logo-sub">Gestión de citas</div>
+      </div>
+    </div>
+
+    <div class="clinic-name" id="sideClinicName">Clínica Vida</div>
+    <div class="clinic-type">Centro médico integral</div>
+    <div class="divider"></div>
+
+    <div class="feat"><div class="feat-icon">🩺</div><div class="feat-text"><strong>Médicos certificados</strong><span>Especialistas con experiencia clínica</span></div></div>
+    <div class="feat"><div class="feat-icon">📅</div><div class="feat-text"><strong>Agenda en línea 24/7</strong><span>Reserva tu cita cuando quieras</span></div></div>
+    <div class="feat"><div class="feat-icon">💬</div><div class="feat-text"><strong>Confirmación por WhatsApp</strong><span>Ticket y recordatorio automático</span></div></div>
+    <div class="feat"><div class="feat-icon">🔒</div><div class="feat-text"><strong>Datos seguros</strong><span>Tu información protegida</span></div></div>
+
+    <div class="sb-bottom">
+      <p>Reservas gestionadas a través de</p>
+      <div class="sb-brand"><span>⚡</span><strong>Zenda Platform</strong><span>· zenda.io</span></div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main-content">
+
+  <!-- Mobile header -->
+  <div class="mob-header">
+    <div class="mob-top">
+      <div class="mob-logo"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAOxAAADsQBlSsOGwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAWnSURBVHic7ZtLiBxFGMf/1T0zO7M7j80mxo2Jj6gYo1FRMIiCqIgHPQgigoiXoJ480IMHQRAPggfx5MWLePHgQQ+CiAeJiAcRUUQRFUVRERFFRBQVUUTxgYrv7vdTtdPd1dXTPT3b3ZnZH3x0d1VX1f/7VX2PqgYAAAAAAAAAAAAAgHHDzCxJuiOhNDNJuiupO1FKp/oe9AAAAABJRU5ErkJggg==" alt="" onerror="this.parentElement.style.background='#00c896';this.style.display='none'"></div>
+      <div>
+        <div class="mob-cn" id="mobClinicName">Clínica Vida</div>
+        <div class="mob-ct">Centro médico</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Steps -->
+  <div class="steps-bar">
+    <div class="step-item active" id="si1"><div class="step-circle">1</div><span class="step-label">Médico</span></div>
+    <div class="step-item" id="si2"><div class="step-circle">2</div><span class="step-label">Fecha y hora</span></div>
+    <div class="step-item" id="si3"><div class="step-circle">3</div><span class="step-label">Tus datos</span></div>
+    <div class="step-item" id="si4"><div class="step-circle">4</div><span class="step-label">Confirmación</span></div>
+  </div>
+
+  <!-- Body -->
+  <div class="bk-body">
+
+    <!-- STEP 1 -->
+    <div class="step-panel active" id="step-1">
+      <div class="sec-title">¿Con qué médico deseas la cita?</div>
+      <div class="sec-sub">Selecciona un especialista disponible</div>
+      <div class="doctors-grid">
+        <div class="doctor-card" onclick="selDoc(this,'Dra. María González','Medicina General','$45')">
+          <div class="doc-avatar">👩‍⚕️</div>
+          <div class="doc-info"><div class="doc-name">Dra. María González</div><div class="doc-spec">Medicina General</div><div class="doc-price">$45 / consulta</div></div>
+          <div class="doc-check">✓</div>
+        </div>
+        <div class="doctor-card" onclick="selDoc(this,'Dr. Carlos Herrera','Pediatría','$55')">
+          <div class="doc-avatar">👨‍⚕️</div>
+          <div class="doc-info"><div class="doc-name">Dr. Carlos Herrera</div><div class="doc-spec">Pediatría</div><div class="doc-price">$55 / consulta</div></div>
+          <div class="doc-check">✓</div>
+        </div>
+        <div class="doctor-card" onclick="selDoc(this,'Dra. Ana Reyes','Cardiología','$80')">
+          <div class="doc-avatar">🫀</div>
+          <div class="doc-info"><div class="doc-name">Dra. Ana Reyes</div><div class="doc-spec">Cardiología</div><div class="doc-price">$80 / consulta</div></div>
+          <div class="doc-check">✓</div>
+        </div>
+        <div class="doctor-card" onclick="selDoc(this,'Dr. Luis Mendoza','Dermatología','$65')">
+          <div class="doc-avatar">🔬</div>
+          <div class="doc-info"><div class="doc-name">Dr. Luis Mendoza</div><div class="doc-spec">Dermatología</div><div class="doc-price">$65 / consulta</div></div>
+          <div class="doc-check">✓</div>
+        </div>
+      </div>
+      <div class="btn-row"><button class="btn-primary" onclick="goStep(2)">Continuar →</button></div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step-panel" id="step-2">
+      <div class="sec-title">¿Cuándo deseas tu cita?</div>
+      <div class="sec-sub">Elige fecha y horario disponible</div>
+      <div class="cal-wrap">
+        <div class="cal-hdr">
+          <div class="cal-mo" id="calMonth">Marzo 2026</div>
+          <div class="cal-nav">
+            <button class="cal-btn" onclick="changeMonth(-1)">‹</button>
+            <button class="cal-btn" onclick="changeMonth(1)">›</button>
+          </div>
+        </div>
+        <div class="cal-dnames">
+          <div class="cal-dn">Dom</div><div class="cal-dn">Lun</div><div class="cal-dn">Mar</div>
+          <div class="cal-dn">Mié</div><div class="cal-dn">Jue</div><div class="cal-dn">Vie</div><div class="cal-dn">Sáb</div>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+      <div class="times-sec">
+        <div class="times-label">⏰ Horarios disponibles</div>
+        <div class="times-grid">
+          <div class="time-slot" onclick="selTime(this)">8:00 AM</div>
+          <div class="time-slot" onclick="selTime(this)">9:00 AM</div>
+          <div class="time-slot taken">9:30 AM</div>
+          <div class="time-slot" onclick="selTime(this)">10:00 AM</div>
+          <div class="time-slot" onclick="selTime(this)">10:30 AM</div>
+          <div class="time-slot taken">11:00 AM</div>
+          <div class="time-slot" onclick="selTime(this)">11:30 AM</div>
+          <div class="time-slot" onclick="selTime(this)">2:00 PM</div>
+          <div class="time-slot" onclick="selTime(this)">3:00 PM</div>
+          <div class="time-slot" onclick="selTime(this)">4:00 PM</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-back" onclick="goStep(1)">← Volver</button>
+        <button class="btn-primary" onclick="goStep(3)">Continuar →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step-panel" id="step-3">
+      <div class="sec-title">Tus datos personales</div>
+      <div class="sec-sub">Para confirmar y enviarte tu ticket de cita</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nombre completo *</label><input type="text" class="form-input" id="inp-n" placeholder="Ej. Ana García López"></div>
+        <div class="form-group"><label class="form-label">DNI / Cédula *</label><input type="text" class="form-input" id="inp-d" placeholder="Ej. 12345678"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Teléfono / WhatsApp *</label><input type="tel" class="form-input" id="inp-p" placeholder="+52 555 0001"></div>
+        <div class="form-group"><label class="form-label">Correo electrónico</label><input type="email" class="form-input" id="inp-e" placeholder="tu@email.com"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Motivo de consulta</label><textarea class="form-input" id="inp-m" placeholder="Describe brevemente tu motivo de consulta..."></textarea></div>
+
+      <div class="sum-card">
+        <div class="sum-hdr"><span>📋</span><h3>Resumen de tu cita</h3></div>
+        <div class="sum-body">
+          <div class="sum-row"><span class="sum-key">Médico</span><span class="sum-val" id="s-doc">—</span></div>
+          <div class="sum-row"><span class="sum-key">Especialidad</span><span class="sum-val" id="s-spec">—</span></div>
+          <div class="sum-row"><span class="sum-key">Fecha</span><span class="sum-val" id="s-fecha">—</span></div>
+          <div class="sum-row"><span class="sum-key">Hora</span><span class="sum-val" id="s-hora">—</span></div>
+          <div class="sum-row"><span class="sum-key">Costo</span><span class="sum-val sum-price" id="s-precio">—</span></div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-back" onclick="goStep(2)">← Volver</button>
+        <button class="btn-primary" onclick="confirmBooking()">✓ Confirmar cita</button>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step-panel" id="step-4">
+      <div class="confirm-wrap">
+        <div class="confirm-icon">✓</div>
+        <div class="confirm-title">¡Cita confirmada!</div>
+        <div class="confirm-sub">Hemos registrado tu cita exitosamente. Recibirás un recordatorio por WhatsApp 24 horas antes.</div>
+        <div class="ticket-card">
+          <div class="tick-hdr">
+            <span class="tick-num">Tu ticket</span>
+            <span class="tick-id" id="t-num">CLV-0000</span>
+          </div>
+          <div class="tick-row"><span class="tick-key">Paciente</span><span class="tick-val" id="t-n">—</span></div>
+          <div class="tick-row"><span class="tick-key">Médico</span><span class="tick-val" id="t-doc">—</span></div>
+          <div class="tick-row"><span class="tick-key">Fecha</span><span class="tick-val" id="t-f">—</span></div>
+          <div class="tick-row"><span class="tick-key">Hora</span><span class="tick-val" id="t-h">—</span></div>
+          <div class="tick-row"><span class="tick-key">Costo</span><span class="tick-val" id="t-p">—</span></div>
+          <div class="tick-row"><span class="tick-key">Estado</span><span class="tick-val" style="color:var(--yellow)">⏳ Pendiente</span></div>
+        </div>
+        <div class="btn-row" style="width:100%;max-width:400px">
+          <button class="btn-primary" onclick="newBooking()">Agendar otra cita</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let bk = {doc:'',spec:'',precio:'',fecha:'',hora:''};
+let calY=2026,calM=2;
+const MO=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const today=new Date();
+
+function showToast(msg,em='✅'){
+  const t=document.getElementById('toast');
+  t.innerHTML=em+' '+msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+function goStep(n){
+  if(n===2&&!bk.doc){showToast('Selecciona un médico','⚠️');return}
+  if(n===3&&!bk.fecha){showToast('Elige una fecha','⚠️');return}
+  if(n===3&&!bk.hora){showToast('Elige un horario','⚠️');return}
+  document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('step-'+n).classList.add('active');
+  for(let i=1;i<=4;i++){
+    const el=document.getElementById('si'+i);
+    el.classList.remove('active','done');
+    if(i<n)el.classList.add('done');
+    if(i===n)el.classList.add('active');
+  }
+  if(n===3){
+    document.getElementById('s-doc').textContent=bk.doc;
+    document.getElementById('s-spec').textContent=bk.spec;
+    document.getElementById('s-fecha').textContent=bk.fecha;
+    document.getElementById('s-hora').textContent=bk.hora;
+    document.getElementById('s-precio').textContent=bk.precio;
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function selDoc(card,name,spec,precio){
+  document.querySelectorAll('.doctor-card').forEach(c=>c.classList.remove('selected'));
+  card.classList.add('selected');
+  bk.doc=name;bk.spec=spec;bk.precio=precio;
+}
+
+function selTime(slot){
+  document.querySelectorAll('.time-slot:not(.taken)').forEach(s=>s.classList.remove('selected'));
+  slot.classList.add('selected');
+  bk.hora=slot.textContent.trim();
+}
+
+function buildCal(){
+  document.getElementById('calMonth').textContent=MO[calM]+' '+calY;
+  const grid=document.getElementById('calGrid');
+  grid.innerHTML='';
+  const first=new Date(calY,calM,1).getDay();
+  const days=new Date(calY,calM+1,0).getDate();
+  for(let i=0;i<first;i++){const e=document.createElement('div');e.className='cal-day empty';grid.appendChild(e)}
+  for(let d=1;d<=days;d++){
+    const e=document.createElement('div');
+    const dt=new Date(calY,calM,d);
+    const isPast=dt<new Date(today.getFullYear(),today.getMonth(),today.getDate());
+    const isToday=dt.toDateString()===today.toDateString();
+    e.className='cal-day'+(isPast?' past':'')+(isToday?' today':'');
+    e.textContent=d;
+    if(!isPast){e.onclick=()=>{
+      document.querySelectorAll('.cal-day').forEach(c=>c.classList.remove('selected'));
+      e.classList.add('selected');
+      const dn=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+      bk.fecha=dn[dt.getDay()]+' '+d+' de '+MO[calM];
+    }}
+    grid.appendChild(e);
+  }
+}
+
+function changeMonth(d){
+  calM+=d;if(calM>11){calM=0;calY++}if(calM<0){calM=11;calY--}
+  buildCal();
+}
+
+function confirmBooking(){
+  const n=document.getElementById('inp-n').value.trim();
+  const p=document.getElementById('inp-p').value.trim();
+  if(!n){showToast('Ingresa tu nombre','⚠️');return}
+  if(!p){showToast('Ingresa tu teléfono','⚠️');return}
+  const tid='CLV-'+(Math.floor(Math.random()*9000)+1000);
+  document.getElementById('t-num').textContent=tid;
+  document.getElementById('t-n').textContent=n;
+  document.getElementById('t-doc').textContent=bk.doc;
+  document.getElementById('t-f').textContent=bk.fecha;
+  document.getElementById('t-h').textContent=bk.hora;
+  document.getElementById('t-p').textContent=bk.precio;
+  goStep(4);
+  showToast('¡Cita agendada con éxito!','🎉');
+}
+
+function newBooking(){
+  bk={doc:'',spec:'',precio:'',fecha:'',hora:''};
+  ['inp-n','inp-d','inp-p','inp-e','inp-m'].forEach(id=>document.getElementById(id).value='');
+  document.querySelectorAll('.doctor-card').forEach(c=>c.classList.remove('selected'));
+  document.querySelectorAll('.time-slot').forEach(s=>s.classList.remove('selected'));
+  goStep(1);
+}
+
+buildCal();
+</script>
+</body>
+</html>

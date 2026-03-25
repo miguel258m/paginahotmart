@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Mi Restaurante Delivery{% endblock %}</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --primary:   #FF6B35;
+      --primary-d: #E55A26;
+      --dark:      #1e1e1e;
+      --cream:     #FFF8F0;
+      --card-bg:   #ffffff;
+      --text-muted:#6c757d;
+    }
+    * { font-family: 'Poppins', sans-serif; box-sizing: border-box; }
+    body { background: var(--cream); color: var(--dark); }
+
+    /* ── NAVBAR ── */
+    .navbar-brand { font-weight: 800; font-size: 1.4rem; color: var(--primary) !important; }
+    .navbar { background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+    .nav-link { font-weight: 500; color: var(--dark) !important; }
+    .nav-link:hover { color: var(--primary) !important; }
+    .cart-badge {
+      background: var(--primary); color: #fff; border-radius: 50%;
+      padding: 2px 7px; font-size: .7rem; font-weight: 700;
+      position: absolute; top: -6px; right: -10px;
+    }
+    .btn-primary-custom {
+      background: var(--primary); color: #fff; border: none;
+      border-radius: 50px; font-weight: 600;
+      transition: background .25s, transform .15s;
+    }
+    .btn-primary-custom:hover {
+      background: var(--primary-d); color: #fff; transform: translateY(-1px);
+    }
+    .btn-outline-custom {
+      border: 2px solid var(--primary); color: var(--primary);
+      border-radius: 50px; font-weight: 600; background: transparent;
+      transition: all .25s;
+    }
+    .btn-outline-custom:hover {
+      background: var(--primary); color: #fff;
+    }
+    /* ── ALERTS ── */
+    .flash-container { position: fixed; top: 80px; right: 1rem; z-index: 9999; width: 320px; }
+
+    {% block extra_style %}{% endblock %}
+  </style>
+
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="{{ url_for('menu') if session.get('user_id') else url_for('index') }}">
+      🍽️ {% block brand %}Mi Restaurante{% endblock %}
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMain">
+      <ul class="navbar-nav ms-auto align-items-center gap-2">
+        {% if session.get('user_id') %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('menu') }}">
+              <i class="fas fa-utensils me-1"></i> Menú
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link position-relative" href="{{ url_for('checkout') }}" id="nav-cart-link">
+              <i class="fas fa-shopping-bag me-1"></i> Carrito
+              <span class="cart-badge" id="cart-count-badge">0</span>
+            </a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle fw-semibold" href="#" data-bs-toggle="dropdown">
+              <i class="fas fa-user-circle me-1"></i> {{ session.get('user_name','') }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                <i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión
+              </a></li>
+            </ul>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="btn btn-primary-custom btn-sm px-3" href="{{ url_for('index') }}">Ingresar</a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+{% endblock %}
+
+<!-- Flash messages -->
+<div class="flash-container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ 'danger' if cat == 'error' else ('warning' if cat == 'warning' else 'success') }} alert-dismissible fade show shadow" role="alert">
+        <i class="fas fa-{{ 'exclamation-circle' if cat == 'error' else ('info-circle' if cat == 'warning' else 'check-circle') }} me-2"></i>
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endwith %}
+</div>
+
+{% block content %}{% endblock %}
+
+<footer class="py-4 mt-5" style="background:#1e1e1e;color:#aaa;font-size:.85rem;">
+  <div class="container text-center">
+    <span>🍽️ <strong style="color:#fff">{% block footer_brand %}Mi Restaurante{% endblock %}</strong>
+    — Delivery rápido y delicioso</span><br>
+    <small>© {{ now.year if now is defined else '2025' }} — Todos los derechos reservados</small>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Actualiza badge del carrito desde el servidor
+  async function refreshCartBadge() {
+    try {
+      const r = await fetch('/api/cart');
+      const cart = await r.json();
+      const total = cart.reduce((s, i) => s + (i.qty || 1), 0);
+      const badge = document.getElementById('cart-count-badge');
+      if (badge) badge.textContent = total;
+    } catch(_) {}
+  }
+  refreshCartBadge();
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

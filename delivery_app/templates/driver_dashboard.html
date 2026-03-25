@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard Motorizado — Delivery{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block navbar %}
+<nav class="navbar sticky-top" style="background:#1e1e1e;">
+  <div class="container-fluid">
+    <span class="navbar-brand text-white fw-bold">
+      🏍️ Panel — {{ session.get('driver_name','Motorizado') }}
+    </span>
+    <div class="d-flex gap-2 align-items-center">
+      <span class="badge rounded-pill px-3 py-2"
+            style="background:var(--primary);font-size:.85rem;">
+        <i class="fas fa-box me-1"></i>
+        <span id="header-count">{{ orders | length }}</span> pedido(s)
+      </span>
+      <a href="{{ url_for('driver_logout') }}" class="btn btn-outline-light btn-sm">
+        <i class="fas fa-sign-out-alt"></i>
+      </a>
+    </div>
+  </div>
+</nav>
+{% endblock %}
+
+{% block extra_style %}
+body { background: #f0f2f5; }
+.driver-sidebar {
+  background: #1e1e1e; min-height: calc(100vh - 56px);
+  padding: 1rem; overflow-y: auto;
+}
+.order-card {
+  background: #fff; border-radius: 16px; padding: 1rem 1.2rem;
+  margin-bottom: .8rem; cursor: pointer;
+  border-left: 4px solid #ccc;
+  transition: border-color .2s, box-shadow .2s;
+}
+.order-card:hover   { box-shadow: 0 4px 16px rgba(0,0,0,.12); }
+.order-card.active  { border-left-color: var(--primary); box-shadow: 0 4px 20px rgba(255,107,53,.2); }
+.order-card.pending   { border-left-color: #FFC107; }
+.order-card.preparing { border-left-color: #2196F3; }
+.order-card.on_way    { border-left-color: #4CAF50; }
+
+.status-chip {
+  font-size: .72rem; font-weight: 700; border-radius: 50px; padding: 3px 10px; border: none;
+}
+.chip-pending   { background: #FFF8E1; color: #F57F17; }
+.chip-preparing { background: #E3F2FD; color: #1565C0; }
+.chip-on_way    { background: #E8F5E9; color: #2E7D32; }
+.chip-delivered { background: #E0E0E0; color: #555; }
+
+/* Mapa */
+#map { height: calc(100vh - 56px); }
+
+/* Panel derecho info */
+.info-panel {
+  background: #fff; border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.1);
+  padding: 1.4rem; position: absolute;
+  bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  width: 90%; max-width: 420px; z-index: 500;
+}
+.btn-status {
+  border: none; border-radius: 50px; padding: .5rem 1rem;
+  font-weight: 600; font-size: .82rem; cursor: pointer;
+  transition: opacity .2s;
+}
+.btn-status:hover { opacity: .85; }
+{% endblock %}
+
+{% block content %}
+<div class="d-flex" style="height:calc(100vh - 56px); overflow:hidden;">
+
+  <!-- ══════ SIDEBAR — Lista de pedidos ══════ -->
+  <div class="driver-sidebar" style="width:380px;min-width:320px;">
+    <h6 class="text-white fw-bold mb-3">
+      <i class="fas fa-list me-2" style="color:var(--primary);"></i>
+      Pedidos Activos
+    </h6>
+
+    {% if not orders %}
+    <div class="text-center text-secondary py-5">
+      <i class="fas fa-check-circle fa-3x mb-3"></i>
+      <p>¡Sin pedidos pendientes!<br>Todo al día 🎉</p>
+    </div>
+    {% endif %}
+
+    <div id="orders-list">
+    {% for order in orders %}
+    <div class="order-card {{ order.status }}" id="card-{{ order.id }}"
+         onclick="selectOrder({{ order.id }}, {{ order.lat or 'null' }}, {{ order.lng or 'null' }})">
+      <div class="d-flex justify-content-between align-items-start mb-1">
+        <span class="fw-bold" style="font-size:.95rem;">Pedido #{{ order.id }}</span>
+        <span class="status-chip chip-{{ order.status }}">
+          {% if order.status == 'pending'   %}⏳ Pendiente
+          {% elif order.status == 'preparing' %}🔥 Preparando
+          {% elif order.status == 'on_way'    %}🚀 En camino
+          {% else %}{{ order.status }}
+          {% endif %}
+        </span>
+      </div>
+
+      <div class="text-muted mb-1" style="font-size:.8rem;">
+        <i class="fas fa-user me-1"></i>{{ order.guest_name or 'Cliente' }}
+        {% if order.guest_phone %}
+        · <a href="tel:{{ order.guest_phone }}" class="text-muted"
+             onclick="event.stopPropagation()">{{ order.guest_phone }}</a>
+        {% endif %}
+      </div>
+
+      <div class="mb-1" style="font-size:.8rem;">
+        <i class="fas fa-map-marker-alt me-1" style="color:var(--primary);"></i>
+        {{ order.address[:65] }}{% if order.address|length > 65 %}…{% endif %}
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-2">
+        <span class="small text-muted">
+          <i class="fas fa-shopping-bag me-1"></i>{{ order.items_sum }} ítem(s) · S/ {{ '%.2f' % order.total }}
+        </span>
+        <span class="small text-muted">
+          {{ order.payment_method | capitalize }}
+        </span>
+      </div>
+
+      <!-- Botones de estado -->
+      <div class="d-flex gap-2 mt-2 flex-wrap" onclick="event.stopPropagation()">
+        {% if order.status == 'pending' %}
+        <button class="btn-status" style="background:#2196F3;color:#fff;"
+                onclick="updateStatus({{ order.id }}, 'preparing')">
+          🔥 Preparando
+        </button>
+        {% elif order.status == 'preparing' %}
+        <button class="btn-status" style="background:#4CAF50;color:#fff;"
+                onclick="updateStatus({{ order.id }}, 'on_way')">
+          🏍️ Salí a entregar
+        </button>
+        {% elif order.status == 'on_way' %}
+        <button class="btn-status" style="background:#4CAF50;color:#fff;"
+                onclick="updateStatus({{ order.id }}, 'delivered')">
+          ✅ Entregado
+        </button>
+        {% endif %}
+        <button class="btn-status" style="background:#f44336;color:#fff;"
+                onclick="updateStatus({{ order.id }}, 'cancelled')">
+          ✕ Cancelar
+        </button>
+      </div>
+    </div>
+    {% endfor %}
+    </div>
+  </div>
+
+  <!-- ══════ MAPA ══════ -->
+  <div class="flex-grow-1 position-relative">
+    <div id="map"></div>
+
+    <!-- Panel de detalle al seleccionar pedido -->
+    <div class="info-panel d-none" id="detail-panel">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <h6 class="fw-bold mb-0" id="dp-title">Pedido #—</h6>
+        <button class="btn btn-sm btn-light" onclick="closeDetail()">✕</button>
+      </div>
+      <div class="mb-2" style="font-size:.88rem;">
+        <i class="fas fa-user me-1 text-muted"></i><span id="dp-client"></span>
+      </div>
+      <div class="mb-2" style="font-size:.88rem;">
+        <i class="fas fa-map-marker-alt me-1" style="color:var(--primary);"></i>
+        <span id="dp-address"></span>
+      </div>
+      <div class="mb-3" style="font-size:.88rem;">
+        <i class="fas fa-money-bill-wave me-1 text-muted"></i>
+        <span id="dp-total"></span>
+        <span class="text-muted ms-1" id="dp-payment"></span>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a id="dp-waze" href="#" target="_blank" class="btn btn-sm btn-warning fw-semibold">
+          🧭 Abrir en Waze
+        </a>
+        <a id="dp-gmaps" href="#" target="_blank" class="btn btn-sm btn-success fw-semibold">
+          🗺️ Google Maps
+        </a>
+        <a id="dp-whatsapp" href="#" target="_blank" class="btn btn-sm btn-success fw-semibold"
+           style="background:#25D366;border:none;">
+          <i class="fab fa-whatsapp me-1"></i>WhatsApp
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────
+//  Mapa Leaflet
+// ─────────────────────────────────────────────────────────────
+const map = L.map('map').setView([-12.0464, -77.0428], 12);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+const ordersData = {
+  {% for order in orders %}
+  {{ order.id }}: {
+    id:       {{ order.id }},
+    lat:      {{ order.lat or 'null' }},
+    lng:      {{ order.lng or 'null' }},
+    address:  {{ order.address | tojson }},
+    client:   {{ (order.guest_name or 'Cliente') | tojson }},
+    phone:    {{ (order.guest_phone or '') | tojson }},
+    total:    "S/ {{ '%.2f' % order.total }}",
+    payment:  {{ order.payment_method | tojson }},
+    status:   {{ order.status | tojson }},
+    notes:    {{ (order.notes or '') | tojson }},
+  },
+  {% endfor %}
+};
+
+const markers = {};
+let activeMarkerId = null;
+
+// Colocar marcadores en el mapa
+Object.values(ordersData).forEach(o => {
+  if (o.lat && o.lng) {
+    const color = o.status === 'on_way' ? '🟢' : o.status === 'preparing' ? '🔵' : '🟡';
+    const icon = L.divIcon({
+      html: `<div style="font-size:2rem;line-height:1;">${color}📍</div>`,
+      iconSize: [32, 48], iconAnchor: [16, 48], className: ''
+    });
+    const m = L.marker([o.lat, o.lng], { icon })
+      .addTo(map)
+      .bindPopup(`<b>Pedido #${o.id}</b><br>${o.client}<br>${o.address}`);
+    markers[o.id] = m;
+  }
+});
+
+// Ajustar vista a todos los marcadores
+const latlngs = Object.values(ordersData)
+  .filter(o => o.lat && o.lng)
+  .map(o => [o.lat, o.lng]);
+if (latlngs.length > 0) {
+  map.fitBounds(latlngs, { padding: [40, 40] });
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Seleccionar pedido → ver en mapa
+// ─────────────────────────────────────────────────────────────
+function selectOrder(id, lat, lng) {
+  // Resaltar card
+  document.querySelectorAll('.order-card').forEach(c => c.classList.remove('active'));
+  const card = document.getElementById(`card-${id}`);
+  if (card) card.classList.add('active');
+  activeMarkerId = id;
+
+  // Mover mapa
+  if (lat && lng) {
+    map.setView([lat, lng], 16);
+    if (markers[id]) markers[id].openPopup();
+  } else {
+    alert(`El pedido #${id} no tiene coordenadas registradas.\nDirección: ${ordersData[id].address}`);
+  }
+
+  // Panel de detalle
+  const o = ordersData[id];
+  document.getElementById('dp-title').textContent    = `Pedido #${o.id}`;
+  document.getElementById('dp-client').textContent   = o.client + (o.phone ? ` · ${o.phone}` : '');
+  document.getElementById('dp-address').textContent  = o.address;
+  document.getElementById('dp-total').textContent    = o.total;
+  document.getElementById('dp-payment').textContent  = `· ${o.payment}`;
+
+  const wazeUrl   = lat ? `https://waze.com/ul?ll=${lat},${lng}&navigate=yes` : '#';
+  const gmapsUrl  = lat ? `https://www.google.com/maps?q=${lat},${lng}` : '#';
+  const waUrl     = o.phone ? `https://wa.me/${o.phone.replace(/\D/g,'')}?text=${encodeURIComponent(`Hola ${o.client}, soy el repartidor. Estoy en camino con tu pedido #${o.id} 🏍️`)}` : '#';
+
+  document.getElementById('dp-waze').href      = wazeUrl;
+  document.getElementById('dp-gmaps').href     = gmapsUrl;
+  document.getElementById('dp-whatsapp').href  = waUrl;
+
+  document.getElementById('detail-panel').classList.remove('d-none');
+}
+
+function closeDetail() {
+  document.getElementById('detail-panel').classList.add('d-none');
+  document.querySelectorAll('.order-card').forEach(c => c.classList.remove('active'));
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Actualizar estado del pedido
+// ─────────────────────────────────────────────────────────────
+async function updateStatus(orderId, status) {
+  const labels = {
+    preparing: '🔥 Preparando',
+    on_way:    '🏍️ En camino',
+    delivered: '✅ Entregado',
+    cancelled: '✕ Cancelado',
+  };
+
+  if (!confirm(`¿Cambiar estado del pedido #${orderId} a "${labels[status]}"?`)) return;
+
+  try {
+    const r = await fetch(`/driver/order/${orderId}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    const d = await r.json();
+    if (d.success) {
+      if (status === 'delivered' || status === 'cancelled') {
+        // Quitar de la lista
+        const card = document.getElementById(`card-${orderId}`);
+        if (card) card.remove();
+        if (markers[orderId]) { map.removeLayer(markers[orderId]); delete markers[orderId]; }
+        if (activeMarkerId === orderId) closeDetail();
+        // Actualizar contador
+        const count = document.querySelectorAll('.order-card').length;
+        document.getElementById('header-count').textContent = count;
+      } else {
+        // Recargar página para reflejar nuevo estado
+        window.location.reload();
+      }
+    }
+  } catch (e) {
+    alert('Error al actualizar. Verifica tu conexión.');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Auto-refresh cada 30 s
+// ─────────────────────────────────────────────────────────────
+setInterval(() => {
+  // Solo recargar si no hay un pedido seleccionado activo
+  if (!activeMarkerId) window.location.reload();
+}, 30000);
+</script>
+{% endblock %}
