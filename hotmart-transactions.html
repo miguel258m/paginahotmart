@@ -776,8 +776,8 @@ function showToast(buyer, product, amount, payMethod) {
     </div>
     <div style="flex:1;">
       <div style="font-size:11px;font-weight:700;color:#34d399;margin-bottom:3px;">✓ Venta realizada</div>
-      <div style="font-size:13px;font-weight:700;color:#fff;">${escHtml(buyer)}</div>
-      <div style="font-size:12px;color:#9ca3af;">${escHtml(product)}</div>
+      <div style="font-size:13px;font-weight:700;color:#fff;">${String(buyer).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      <div style="font-size:12px;color:#9ca3af;">${String(product).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
     </div>
     <div style="font-size:14px;font-weight:800;color:#34d399;">+USD$${parseFloat(amount).toFixed(2)}</div>
     <button onclick="this.parentElement.remove()" style="position:absolute;top:6px;right:8px;background:none;border:none;cursor:pointer;color:#6b7280;font-size:18px;">×</button>
