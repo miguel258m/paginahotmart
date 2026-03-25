@@ -754,13 +754,19 @@ function showToast(buyer, product, amount, payMethod) {
   const toast = document.createElement('div');
   toast.className = 'toast';
   toast.innerHTML = `
-    <div class="toast-icon">🎉</div>
+    <div class="toast-icon">
+      <svg width="28" height="28" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="18" cy="18" r="18" fill="#E8380D"/>
+        <path d="M18 8C18 8 10 13 10 19.5C10 23.6 13.6 27 18 27C22.4 27 26 23.6 26 19.5C26 13 18 8 18 8Z" fill="white"/>
+        <circle cx="18" cy="19.5" r="4" fill="#E8380D"/>
+      </svg>
+    </div>
     <div class="toast-body">
-      <div class="toast-tag">¡Venta aprobada!</div>
+      <div class="toast-tag">✓ Venta realizada</div>
       <div class="toast-name">${escHtml(buyer)}</div>
       <div class="toast-detail">${escHtml(product)} · ${payLabels[payMethod]||payMethod}</div>
     </div>
-    <div class="toast-amt">USD$ ${parseFloat(amount).toFixed(2).replace('.',',')}</div>
+    <div class="toast-amt">+ USD$ ${parseFloat(amount).toFixed(2).replace('.',',')}</div>
     <button class="toast-x" onclick="this.parentElement.remove()">✕</button>
     <div class="toast-bar"></div>
   `;
