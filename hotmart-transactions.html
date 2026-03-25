@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<link rel="icon" type="image/png" href="https://i.imgur.com/8YqKQNJ.png"/>
 <title>Hotmart – Transacciones</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -854,10 +855,16 @@ function updateNotificationIndicator() {
 
 function showPushNotification(buyer, product, amount) {
   if ('Notification' in window && Notification.permission === 'granted') {
+    // Try to use uploaded logo, fallback to Hotmart-style icon
+    const logoImg = document.getElementById('logoImg');
+    const iconUrl = (logoImg && logoImg.src && logoImg.style.display !== 'none') 
+      ? logoImg.src 
+      : 'https://i.imgur.com/8YqKQNJ.png'; // Hotmart logo placeholder
+    
     const notification = new Notification('💰 Nueva venta realizada', {
       body: `${buyer} compró ${product}\nMonto: USD$ ${amount.toFixed(2)}`,
-      icon: 'https://img.icons8.com/color/96/000000/money-bag.png',
-      badge: 'https://img.icons8.com/color/96/000000/money-bag.png',
+      icon: iconUrl,
+      badge: iconUrl,
       tag: 'new-sale-' + Date.now(),
       requireInteraction: false,
       silent: false
