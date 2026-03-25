@@ -707,7 +707,7 @@ function updateSessionStats(amount) {
   document.getElementById('sessionTotalWrap').style.display = '';
   // Bump notification badge
   const nb = document.getElementById('notifBadge');
-  nb.textContent = parseInt(nb.textContent) + 1;
+  if (nb) nb.textContent = parseInt(nb.textContent) + 1;
 }
 
 const payLabels = {visa:'VISA', mc:'Mastercard', pix:'Pix', paypal:'PayPal'};
