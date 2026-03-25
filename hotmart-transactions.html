@@ -788,6 +788,17 @@ function toggleDropdown(btn) {
 
 function deleteRow(item) {
   const row = item.closest('tr');
+  const fbKey = row.dataset.fbKey;
+
+  if (fbKey) {
+    // Delete from Firebase
+    fetch(`https://pagina-hotmart-default-rtdb.firebaseio.com/ventas/${fbKey}.json`, {
+      method: 'DELETE'
+    }).then(() => {
+      console.log('Deleted from Firebase:', fbKey);
+    }).catch(err => console.error('Error deleting:', err));
+  }
+
   row.style.transition = 'opacity 0.3s';
   row.style.opacity = '0';
   setTimeout(() => row.remove(), 300);
@@ -844,6 +855,7 @@ function addRowToTable(data) {
     <td><select class="status-select sel-aprobada"><option value="aprobada" selected>Aprobada</option><option value="completa">Completa</option><option value="pendiente">Pendiente</option><option value="cancelada">Cancelada</option><option value="reembolso">Reembolso</option></select></td>
     <td><div class="dropdown"><button class="act-btn" onclick="toggleDropdown(this)">⋮</button><div class="dropdown-menu"><div class="dropdown-item danger" onclick="deleteRow(this)">🗑 Eliminar</div></div></div></td>
   `;
+  if (data._fbKey) tr.dataset.fbKey = data._fbKey;
   // Flash green background
   tr.style.background = '#f0fdf4';
   tbody.insertBefore(tr, tbody.firstChild);
@@ -1104,7 +1116,10 @@ function fetchNewSales() {
         return;
       }
       const allSales = Object.values(data);
-      const newSales = allSales.filter(d => d && d.ts && d.ts > lastTs);
+      const allKeys = Object.keys(data);
+      const newSales = allSales
+        .map((d, i) => ({ ...d, _fbKey: allKeys[i] }))
+        .filter(d => d && d.ts && d.ts > lastTs);
       newSales
         .sort((a,b) => a.ts - b.ts)
         .forEach(d => {
