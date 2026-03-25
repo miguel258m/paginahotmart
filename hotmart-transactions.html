@@ -1099,7 +1099,7 @@ function showInPageAlert(buyer, product, amount) {
 //  FIREBASE REALTIME POLLING
 // ══════════════════════════════════════
 const FB_URL = 'https://pagina-hotmart-default-rtdb.firebaseio.com/ventas.json';
-let lastTs = Date.now();
+let lastTs = 0;
 let seenKeys = new Set();
 let fbReady = false;
 
@@ -1108,10 +1108,17 @@ function initFirebase() {
     .then(r => r.json())
     .then(data => {
       if (data) {
-        Object.entries(data).forEach(([key, d]) => {
-          seenKeys.add(key);
-          if (d && d.ts) lastTs = Math.max(lastTs, d.ts);
-        });
+        // Load ALL existing sales into the table
+        Object.entries(data)
+          .sort((a, b) => (a[1].ts || 0) - (b[1].ts || 0))
+          .forEach(([key, d]) => {
+            if (!d || !d.ts) return;
+            seenKeys.add(key);
+            lastTs = Math.max(lastTs, d.ts);
+            d._fbKey = key;
+            addRowToTable(d);
+            updateTotal(parseFloat(d.amount));
+          });
       }
       fbReady = true;
       console.log('Firebase initialized, existing keys:', seenKeys.size);
@@ -1136,8 +1143,6 @@ function fetchNewSales() {
         updateTotal(parseFloat(d.amount));
         updateSessionStats(parseFloat(d.amount));
         showToast(d.buyer, d.product, d.amount, d.payMethod);
-        sendOneSignalNotification(d.buyer, d.product, parseFloat(d.amount));
-        showPushNotification(d.buyer, d.product, parseFloat(d.amount));
       });
     })
     .catch(() => {});
