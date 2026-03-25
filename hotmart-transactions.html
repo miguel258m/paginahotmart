@@ -1128,6 +1128,7 @@ function initFirebase() {
 
 function fetchNewSales() {
   if (!fbReady) return;
+  console.log('fetchNewSales running, seenKeys:', seenKeys.size);
   fetch(FB_URL)
     .then(r => r.json())
     .then(data => {
