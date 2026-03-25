@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Test OneSignal</title>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<style>
+body{font-family:Arial,sans-serif;padding:40px;max-width:600px;margin:0 auto;}
+button{padding:15px 30px;font-size:16px;margin:10px;cursor:pointer;border-radius:8px;border:none;background:#E8380D;color:white;font-weight:bold;}
+button:hover{opacity:0.9;}
+#status{margin-top:20px;padding:15px;background:#f0f0f0;border-radius:8px;white-space:pre-wrap;font-family:monospace;font-size:12px;}
+</style>
+</head>
+<body>
+
+<h1>Test OneSignal</h1>
+<p>Prueba las notificaciones paso a paso</p>
+
+<button onclick="initOneSignal()">1. Inicializar OneSignal</button>
+<button onclick="requestPermission()">2. Pedir Permisos</button>
+<button onclick="checkStatus()">3. Ver Estado</button>
+<button onclick="sendTestNotification()">4. Enviar Notificación</button>
+
+<div id="status">Esperando...</div>
+
+<script>
+let log = '';
+
+function addLog(msg) {
+  log += new Date().toLocaleTimeString() + ' - ' + msg + '\n';
+  document.getElementById('status').textContent = log;
+  console.log(msg);
+}
+
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+function initOneSignal() {
+  addLog('Inicializando OneSignal...');
+  
+  OneSignalDeferred.push(async function(OneSignal) {
+    try {
+      await OneSignal.init({
+        appId: "8881927b-8fcf-41de-a86d-7fe035ba2b5f",
+        safari_web_id: "web.onesignal.auto.00e855ed-5f66-45b8-ad03-54b1e142944e",
+        allowLocalhostAsSecureOrigin: true,
+      });
+      addLog('✅ OneSignal inicializado correctamente');
+    } catch (error) {
+      addLog('❌ Error: ' + error.message);
+    }
+  });
+}
+
+async function requestPermission() {
+  addLog('Pidiendo permisos...');
+  try {
+    const permission = await OneSignal.Notifications.requestPermission();
+    addLog('Permiso: ' + permission);
+    
+    if (permission) {
+      addLog('✅ Permisos concedidos');
+    } else {
+      addLog('❌ Permisos denegados');
+    }
+  } catch (error) {
+    addLog('❌ Error: ' + error.message);
+  }
+}
+
+async function checkStatus() {
+  addLog('Verificando estado...');
+  try {
+    const isPushSupported = await OneSignal.Notifications.isPushSupported();
+    addLog('Push soportado: ' + isPushSupported);
+    
+    const permission = await OneSignal.Notifications.permission;
+    addLog('Permiso actual: ' + permission);
+    
+    const isOptedIn = await OneSignal.User.PushSubscription.optedIn;
+    addLog('Usuario suscrito: ' + isOptedIn);
+    
+    const userId = await OneSignal.User.PushSubscription.id;
+    addLog('User ID: ' + (userId || 'No disponible'));
+  } catch (error) {
+    addLog('❌ Error: ' + error.message);
+  }
+}
+
+function sendTestNotification() {
+  addLog('Enviando notificación de prueba...');
+  
+  const appId = '8881927b-8fcf-41de-a86d-7fe035ba2b5f';
+  const restApiKey = 'os_v2_app_rcaze64pz5a55kdnp7qdlorll7zjxwj47p4eg34fpytq73estvgrrho2a7mv2enqznxvvtlza525cl4upfdl2d5o5ekekaqw4cyuxwy';
+  
+  fetch('https://onesignal.com/api/v1/notifications', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Basic ' + restApiKey
+    },
+    body: JSON.stringify({
+      app_id: appId,
+      included_segments: ['Subscribed Users'],
+      headings: { en: '💰 Test Notification' },
+      contents: { en: 'Esta es una notificación de prueba' }
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    addLog('✅ Respuesta: ' + JSON.stringify(data, null, 2));
+  })
+  .catch(error => {
+    addLog('❌ Error: ' + error.message);
+  });
+}
+
+// Auto-init on load
+window.addEventListener('load', () => {
+  addLog('Página cargada');
+  setTimeout(initOneSignal, 1000);
+});
+</script>
+
+</body>
+</html>
