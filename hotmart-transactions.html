@@ -1111,15 +1111,15 @@ function fetchNewSales() {
   fetch(FB_URL)
     .then(r => r.json())
     .then(data => {
-      if (!data || data.error) {
-        console.warn('Firebase no devolvió datos o falta el índice .indexOn en "ts":', data && data.error);
-        return;
-      }
+      if (!data) { isFirstLoad = false; return; }
       const allSales = Object.values(data);
       const allKeys = Object.keys(data);
       const newSales = allSales
         .map((d, i) => ({ ...d, _fbKey: allKeys[i] }))
         .filter(d => d && d.ts && d.ts > lastTs);
+      
+      const wasFirstLoad = isFirstLoad;
+      
       newSales
         .sort((a,b) => a.ts - b.ts)
         .forEach(d => {
@@ -1127,8 +1127,7 @@ function fetchNewSales() {
           const amt = parseFloat(d.amount);
           addRowToTable(d);
           updateTotal(amt);
-          if (!isFirstLoad) {
-            // Solo mostrar toast/notificaciones para ventas nuevas, no al cargar historial
+          if (!wasFirstLoad) {
             updateSessionStats(amt);
             showToast(d.buyer, d.product, d.amount, d.payMethod);
             showInPageAlert(d.buyer, d.product, d.amount);
