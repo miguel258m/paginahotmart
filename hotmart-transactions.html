@@ -286,11 +286,14 @@ td{padding:12px 14px;vertical-align:middle;color:#374151;}
     </div>
     <input type="file" id="logoUploadInput" accept="image/*" style="display:none;" onchange="uploadLogo(this)"/>
     <div class="topbar-right">
+      <div class="tb-btn" id="installBtn" onclick="installPWA()" title="Instalar como app" style="display:none;">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </div>
       <div class="tb-btn" id="enableNotifBtn" onclick="requestNotificationPermission()" title="Activar notificaciones push">
         <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
         <span style="position:absolute;top:-2px;right:-4px;background:#059669;color:#fff;font-size:8px;font-weight:700;padding:1px 4px;border-radius:8px;display:none;" id="notifActiveIndicator">ON</span>
       </div>
-      <div class="tb-btn" onclick="showPushNotification('Juan Pérez', 'Curso de Marketing', 99.99)" title="Probar notificación">
+      <div class="tb-btn" onclick="showInPageAlert('Juan Pérez', 'Curso de Marketing', 99.99)" title="Probar notificación">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
       </div>
       <div class="tb-btn"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><path d="M1 20c0-3.3 3.6-6 8-6"/><path d="M23 20c0-3.3-3.6-6-8-6"/></svg></div>
@@ -822,6 +825,45 @@ function addRowToTable(data) {
     const tag = tr.querySelector('.new-tag');
     if(tag) tag.remove();
   }, 3500);
+}
+
+// ══════════════════════════════════════
+//  PWA INSTALLATION
+// ══════════════════════════════════════
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBtn').style.display = 'flex';
+  console.log('PWA install prompt available');
+});
+
+function installPWA() {
+  if (!deferredPrompt) {
+    alert('La app ya está instalada o tu navegador no soporta instalación');
+    return;
+  }
+  
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then((choiceResult) => {
+    if (choiceResult.outcome === 'accepted') {
+      console.log('User accepted PWA install');
+      document.getElementById('installBtn').style.display = 'none';
+    }
+    deferredPrompt = null;
+  });
+}
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js')
+    .then(registration => {
+      console.log('Service Worker registered:', registration);
+    })
+    .catch(error => {
+      console.log('Service Worker registration failed:', error);
+    });
 }
 
 // ══════════════════════════════════════
