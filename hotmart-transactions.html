@@ -203,9 +203,8 @@ td{padding:12px 14px;vertical-align:middle;color:#374151;}
 
 /* ── Toast ── */
 #toast-container{position:fixed;bottom:24px;left:72px;display:flex;flex-direction:column-reverse;gap:10px;z-index:99999;pointer-events:none;}
-.toast{pointer-events:auto;background:#1f2937;border-left:4px solid #059669;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.3);padding:14px 38px 14px 14px;display:flex;align-items:center;gap:12px;min-width:300px;max-width:360px;position:relative;transform:translateX(-120%);transition:transform .45s cubic-bezier(.34,1.56,.64,1),opacity .45s ease;opacity:0;}
-.toast.show{transform:translateX(0);opacity:1;}
-.toast.hide{transform:translateX(-120%);opacity:0;transition:transform .35s ease,opacity .35s ease;}
+.toast{pointer-events:auto;background:#1f2937;border-left:4px solid #34d399;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.5);padding:14px 38px 14px 14px;display:flex;align-items:center;gap:12px;min-width:300px;max-width:360px;position:relative;opacity:1;transform:translateX(0);}
+.toast.hide{opacity:0;transition:opacity .35s ease;}
 .toast-icon{width:36px;height:36px;border-radius:50%;background:#ecfdf5;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;}
 .toast-body{flex:1;min-width:0;}
 .toast-tag{font-size:10px;font-weight:700;color:#34d399;text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px;}
@@ -772,15 +771,10 @@ function showToast(buyer, product, amount, payMethod) {
     <div class="toast-bar"></div>
   `;
   container.appendChild(toast);
-  requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
-  const bar = toast.querySelector('.toast-bar');
-  const dur = 7000;
-  bar.style.transition = `width ${dur}ms linear`;
-  requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width='0%'; }));
   setTimeout(() => {
-    toast.classList.replace('show','hide');
+    toast.classList.add('hide');
     setTimeout(() => toast.remove(), 400);
-  }, dur);
+  }, 7000);
   const all = container.querySelectorAll('.toast');
   if(all.length > 3) all[0].remove();
 }
