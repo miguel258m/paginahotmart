@@ -7,6 +7,7 @@
 <link rel="manifest" href="./manifest.json"/>
 <link rel="icon" type="image/png" href="https://i.imgur.com/8YqKQNJ.png"/>
 <title>Hotmart – Transacciones</title>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;background:#f4f4f6;display:flex;height:100vh;overflow:hidden;font-size:13px;}
@@ -824,44 +825,85 @@ function addRowToTable(data) {
 }
 
 // ══════════════════════════════════════
-//  PUSH NOTIFICATIONS
+//  ONESIGNAL PUSH NOTIFICATIONS
 // ══════════════════════════════════════
-
-// Register Service Worker for mobile support
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js')
-    .then(registration => {
-      console.log('Service Worker registered:', registration);
-    })
-    .catch(error => {
-      console.log('Service Worker registration failed:', error);
-    });
-}
-
-function requestNotificationPermission() {
-  if (!('Notification' in window)) {
-    alert('Tu navegador no soporta notificaciones push');
-    return;
-  }
-
-  if (Notification.permission === 'granted') {
-    alert('✅ Las notificaciones ya están activadas');
-    updateNotificationIndicator();
-    return;
-  }
-
-  Notification.requestPermission().then(permission => {
-    console.log('Notification permission:', permission);
-    if (permission === 'granted') {
-      alert('✅ Notificaciones activadas! Recibirás alertas de nuevas ventas.');
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal) {
+  await OneSignal.init({
+    appId: "8881927b-8fcf-41de-a86d-7fe035ba2b5f",
+    safari_web_id: "web.onesignal.auto.00e855ed-5f66-45b8-ad03-54b1e142944e",
+    notifyButton: {
+      enable: false, // We'll use our custom button
+    },
+    allowLocalhostAsSecureOrigin: true,
+  });
+  
+  console.log('OneSignal initialized');
+  
+  // Check subscription status
+  OneSignal.User.PushSubscription.addEventListener('change', function(event) {
+    console.log('Push subscription changed:', event);
+    if (event.current.optedIn) {
       updateNotificationIndicator();
-      // Test notification
-      showPushNotification('Test', 'Notificaciones activadas correctamente', 0);
-    } else {
-      alert('❌ Necesitas activar los permisos de notificación en tu navegador');
     }
   });
+});
+
+async function requestNotificationPermission() {
+  try {
+    const OneSignal = await window.OneSignalDeferred;
+    await OneSignal.Notifications.requestPermission();
+    const permission = await OneSignal.Notifications.permission;
+    
+    if (permission) {
+      alert('✅ Notificaciones activadas! Recibirás alertas de nuevas ventas.');
+      updateNotificationIndicator();
+      // Send test notification
+      sendOneSignalNotification('Test', 'Notificaciones activadas correctamente', 0);
+    } else {
+      alert('❌ Necesitas activar los permisos de notificación');
+    }
+  } catch (error) {
+    console.error('Error requesting permission:', error);
+    alert('❌ Error al activar notificaciones');
+  }
 }
+
+function sendOneSignalNotification(buyer, product, amount) {
+  const appId = '8881927b-8fcf-41de-a86d-7fe035ba2b5f';
+  const restApiKey = 'os_v2_app_rcaze64pz5a55kdnp7qdlorll7zjxwj47p4eg34fpytq73estvgrrho2a7mv2enqznxvvtlza525cl4upfdl2d5o5ekekaqw4cyuxwy';
+  
+  console.log('Sending OneSignal notification:', { buyer, product, amount });
+  
+  fetch('https://onesignal.com/api/v1/notifications', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Basic ' + restApiKey
+    },
+    body: JSON.stringify({
+      app_id: appId,
+      included_segments: ['Subscribed Users'],
+      headings: { en: '💰 Nueva venta realizada' },
+      contents: { en: `${buyer} compró ${product}\nMonto: USD$ ${amount.toFixed(2)}` },
+      big_picture: 'https://i.imgur.com/8YqKQNJ.png',
+      chrome_web_icon: 'https://i.imgur.com/8YqKQNJ.png',
+      firefox_icon: 'https://i.imgur.com/8YqKQNJ.png',
+      url: 'https://paginahotmart-git-main-berdugo1232-5800s-projects.vercel.app/hotmart-transactions.html'
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('OneSignal notification sent successfully:', data);
+  })
+  .catch(error => {
+    console.error('Error sending OneSignal notification:', error);
+  });
+}
+
+// ══════════════════════════════════════
+//  PUSH NOTIFICATIONS (Fallback)
+// ══════════════════════════════════════
 
 function updateNotificationIndicator() {
   const indicator = document.getElementById('notifActiveIndicator');
@@ -1032,7 +1074,8 @@ function fetchNewSales() {
             // Solo mostrar toast para ventas realmente nuevas, no al cargar historial inicial
             updateSessionStats(amt);
             showToast(d.buyer, d.product, d.amount, d.payMethod);
-            showPushNotification(d.buyer, d.product, d.amount);
+            showInPageAlert(d.buyer, d.product, d.amount);
+            sendOneSignalNotification(d.buyer, d.product, d.amount);
           }
         });
     })
