@@ -851,21 +851,29 @@ OneSignalDeferred.push(async function(OneSignal) {
 
 async function requestNotificationPermission() {
   try {
-    const OneSignal = await window.OneSignalDeferred;
-    await OneSignal.Notifications.requestPermission();
-    const permission = await OneSignal.Notifications.permission;
+    // Wait for OneSignal to be ready
+    await new Promise(resolve => {
+      if (window.OneSignal) {
+        resolve();
+      } else {
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(function() {
+          resolve();
+        });
+      }
+    });
+    
+    const permission = await OneSignal.Notifications.requestPermission();
     
     if (permission) {
       alert('✅ Notificaciones activadas! Recibirás alertas de nuevas ventas.');
       updateNotificationIndicator();
-      // Send test notification
-      sendOneSignalNotification('Test', 'Notificaciones activadas correctamente', 0);
     } else {
       alert('❌ Necesitas activar los permisos de notificación');
     }
   } catch (error) {
     console.error('Error requesting permission:', error);
-    alert('❌ Error al activar notificaciones');
+    alert('❌ Error al activar notificaciones: ' + error.message);
   }
 }
 
