@@ -7,7 +7,6 @@
 <link rel="manifest" href="./manifest.json"/>
 <link rel="icon" type="image/png" href="https://i.imgur.com/8YqKQNJ.png"/>
 <title>Hotmart – Transacciones</title>
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;background:#f4f4f6;display:flex;height:100vh;overflow:hidden;font-size:13px;}
@@ -203,16 +202,16 @@ td{padding:12px 14px;vertical-align:middle;color:#374151;}
 .success-actions{display:flex;gap:10px;flex-wrap:wrap;}
 
 /* ── Toast ── */
-#toast-container{position:fixed;bottom:24px;left:72px;display:flex;flex-direction:column-reverse;gap:10px;z-index:9999;pointer-events:none;}
-.toast{pointer-events:auto;background:#fff;border-left:4px solid #059669;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.15);padding:14px 38px 14px 14px;display:flex;align-items:center;gap:12px;min-width:300px;max-width:360px;position:relative;transform:translateX(-120%);transition:transform .45s cubic-bezier(.34,1.56,.64,1),opacity .45s ease;opacity:0;}
+#toast-container{position:fixed;bottom:24px;left:72px;display:flex;flex-direction:column-reverse;gap:10px;z-index:99999;pointer-events:none;}
+.toast{pointer-events:auto;background:#1f2937;border-left:4px solid #059669;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.3);padding:14px 38px 14px 14px;display:flex;align-items:center;gap:12px;min-width:300px;max-width:360px;position:relative;transform:translateX(-120%);transition:transform .45s cubic-bezier(.34,1.56,.64,1),opacity .45s ease;opacity:0;}
 .toast.show{transform:translateX(0);opacity:1;}
 .toast.hide{transform:translateX(-120%);opacity:0;transition:transform .35s ease,opacity .35s ease;}
 .toast-icon{width:36px;height:36px;border-radius:50%;background:#ecfdf5;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;}
 .toast-body{flex:1;min-width:0;}
-.toast-tag{font-size:10px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px;}
-.toast-name{font-size:13px;font-weight:700;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.toast-detail{font-size:11.5px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.toast-amt{font-size:14px;font-weight:800;color:#059669;flex-shrink:0;}
+.toast-tag{font-size:10px;font-weight:700;color:#34d399;text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px;}
+.toast-name{font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.toast-detail{font-size:11.5px;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.toast-amt{font-size:14px;font-weight:800;color:#34d399;flex-shrink:0;}
 .toast-x{position:absolute;top:8px;right:10px;background:none;border:none;cursor:pointer;color:#9ca3af;font-size:15px;padding:2px;}
 .toast-x:hover{color:#374151;}
 .toast-bar{position:absolute;bottom:0;left:0;height:3px;background:#059669;border-radius:0 0 0 12px;width:100%;}
