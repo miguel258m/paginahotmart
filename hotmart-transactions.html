@@ -282,9 +282,12 @@ td{padding:12px 14px;vertical-align:middle;color:#374151;}
     </div>
     <input type="file" id="logoUploadInput" accept="image/*" style="display:none;" onchange="uploadLogo(this)"/>
     <div class="topbar-right">
+      <div class="tb-btn" id="enableNotifBtn" onclick="requestNotificationPermission()" title="Activar notificaciones push">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span style="position:absolute;top:-2px;right:-4px;background:#059669;color:#fff;font-size:8px;font-weight:700;padding:1px 4px;border-radius:8px;display:none;" id="notifActiveIndicator">ON</span>
+      </div>
       <div class="tb-btn"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><path d="M1 20c0-3.3 3.6-6 8-6"/><path d="M23 20c0-3.3-3.6-6-8-6"/></svg></div>
       <div class="tb-btn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5" fill="#6b7280"/></svg></div>
-      <div class="tb-btn"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><span class="notif-badge" id="notifBadge">31</span></div>
       <div class="tb-btn"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
       <div class="avatar-btn">A</div>
     </div>
@@ -815,6 +818,67 @@ function addRowToTable(data) {
 }
 
 // ══════════════════════════════════════
+//  PUSH NOTIFICATIONS
+// ══════════════════════════════════════
+function requestNotificationPermission() {
+  if (!('Notification' in window)) {
+    alert('Tu navegador no soporta notificaciones push');
+    return;
+  }
+
+  if (Notification.permission === 'granted') {
+    alert('✅ Las notificaciones ya están activadas');
+    updateNotificationIndicator();
+    return;
+  }
+
+  Notification.requestPermission().then(permission => {
+    console.log('Notification permission:', permission);
+    if (permission === 'granted') {
+      alert('✅ Notificaciones activadas! Recibirás alertas de nuevas ventas.');
+      updateNotificationIndicator();
+      // Test notification
+      showPushNotification('Test', 'Notificaciones activadas correctamente', 0);
+    } else {
+      alert('❌ Necesitas activar los permisos de notificación en tu navegador');
+    }
+  });
+}
+
+function updateNotificationIndicator() {
+  const indicator = document.getElementById('notifActiveIndicator');
+  if (indicator && Notification.permission === 'granted') {
+    indicator.style.display = 'block';
+  }
+}
+
+function showPushNotification(buyer, product, amount) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    const notification = new Notification('💰 Nueva venta realizada', {
+      body: `${buyer} compró ${product}\nMonto: USD$ ${amount.toFixed(2)}`,
+      icon: 'https://img.icons8.com/color/96/000000/money-bag.png',
+      badge: 'https://img.icons8.com/color/96/000000/money-bag.png',
+      tag: 'new-sale-' + Date.now(),
+      requireInteraction: false,
+      silent: false
+    });
+
+    notification.onclick = function() {
+      window.focus();
+      notification.close();
+    };
+
+    // Auto-close after 6 seconds
+    setTimeout(() => notification.close(), 6000);
+  }
+}
+
+// Check permission on page load
+window.addEventListener('DOMContentLoaded', () => {
+  updateNotificationIndicator();
+});
+
+// ══════════════════════════════════════
 //  FIREBASE REALTIME SYNC
 // ══════════════════════════════════════
 const FB_URL = 'https://pagina-hotmart-default-rtdb.firebaseio.com/ventas.json';
@@ -841,6 +905,7 @@ function fetchNewSales() {
             // Solo mostrar toast para ventas realmente nuevas, no al cargar historial inicial
             updateSessionStats(amt);
             showToast(d.buyer, d.product, d.amount, d.payMethod);
+            showPushNotification(d.buyer, d.product, d.amount);
           }
         });
     })
