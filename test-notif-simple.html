@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Test Notificaciones Simple</title>
+<style>
+body{font-family:Arial,sans-serif;padding:40px;max-width:600px;margin:0 auto;text-align:center;}
+button{padding:20px 40px;font-size:18px;margin:20px;cursor:pointer;border-radius:12px;border:none;background:#E8380D;color:white;font-weight:bold;display:block;width:100%;}
+button:hover{opacity:0.9;}
+#status{margin-top:30px;padding:20px;background:#f0f0f0;border-radius:12px;text-align:left;font-size:14px;line-height:1.8;}
+.success{color:#059669;font-weight:bold;}
+.error{color:#e11d48;font-weight:bold;}
+</style>
+</head>
+<body>
+
+<h1>🔔 Test de Notificaciones</h1>
+<p>Prueba si tu navegador soporta notificaciones</p>
+
+<button onclick="testNotifications()">Probar Notificación</button>
+
+<div id="status"></div>
+
+<script>
+function log(msg, type = 'info') {
+  const status = document.getElementById('status');
+  const className = type === 'success' ? 'success' : type === 'error' ? 'error' : '';
+  status.innerHTML += `<div class="${className}">${new Date().toLocaleTimeString()} - ${msg}</div>`;
+}
+
+async function testNotifications() {
+  document.getElementById('status').innerHTML = '';
+  
+  // 1. Check if notifications are supported
+  if (!('Notification' in window)) {
+    log('❌ Tu navegador NO soporta notificaciones', 'error');
+    log('Prueba con Chrome o Firefox', 'error');
+    return;
+  }
+  log('✅ Tu navegador soporta notificaciones', 'success');
+  
+  // 2. Check current permission
+  log('Permiso actual: ' + Notification.permission);
+  
+  // 3. Request permission if needed
+  if (Notification.permission === 'default') {
+    log('Pidiendo permisos...');
+    const permission = await Notification.requestPermission();
+    log('Resultado: ' + permission, permission === 'granted' ? 'success' : 'error');
+  }
+  
+  // 4. Try to show notification
+  if (Notification.permission === 'granted') {
+    log('✅ Permisos concedidos, enviando notificación...', 'success');
+    
+    try {
+      const notification = new Notification('💰 Nueva venta realizada', {
+        body: 'Juan Pérez compró Curso de Marketing\nMonto: USD$ 99.99',
+        icon: 'https://i.imgur.com/8YqKQNJ.png',
+        badge: 'https://i.imgur.com/8YqKQNJ.png',
+        vibrate: [200, 100, 200],
+        tag: 'test-sale',
+        requireInteraction: false
+      });
+      
+      log('✅ Notificación enviada!', 'success');
+      log('Si no la ves, revisa la configuración de notificaciones de tu navegador', 'error');
+      
+      notification.onclick = function() {
+        log('Notificación clickeada');
+        window.focus();
+        notification.close();
+      };
+      
+      setTimeout(() => notification.close(), 6000);
+      
+    } catch (error) {
+      log('❌ Error al crear notificación: ' + error.message, 'error');
+    }
+  } else {
+    log('❌ Permisos denegados. Ve a configuración del navegador y activa las notificaciones para este sitio.', 'error');
+  }
+}
+
+// Auto-check on load
+window.addEventListener('load', () => {
+  if ('Notification' in window) {
+    log('Estado inicial: ' + Notification.permission);
+  } else {
+    log('❌ Notificaciones no soportadas', 'error');
+  }
+});
+</script>
+
+</body>
+</html>
