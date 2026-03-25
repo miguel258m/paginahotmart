@@ -750,7 +750,9 @@ document.querySelectorAll('.status-select').forEach(attachSelect);
 //  TOAST
 // ══════════════════════════════════════
 function showToast(buyer, product, amount, payMethod) {
+  console.log('showToast called:', buyer, product, amount);
   const container = document.getElementById('toast-container');
+  if (!container) { console.error('toast-container not found!'); return; }
   const toast = document.createElement('div');
   toast.className = 'toast';
   toast.innerHTML = `
@@ -1134,6 +1136,7 @@ function fetchNewSales() {
           addRowToTable(d);
           updateTotal(amt);
           if (!wasFirstLoad) {
+            console.log('Showing toast for new sale:', d.buyer);
             updateSessionStats(amt);
             showToast(d.buyer, d.product, d.amount, d.payMethod);
             showInPageAlert(d.buyer, d.product, d.amount);
