@@ -1133,7 +1133,7 @@ function fetchNewSales() {
     .then(data => {
       if (!data) return;
       const newEntries = Object.entries(data)
-        .filter(([key, d]) => d && d.ts && d.ts > lastTs && !seenKeys.has(key))
+        .filter(([key, d]) => d && d.ts && !seenKeys.has(key))
         .sort((a, b) => a[1].ts - b[1].ts);
       newEntries.forEach(([key, d]) => {
         seenKeys.add(key);
