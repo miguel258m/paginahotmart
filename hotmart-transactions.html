@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="theme-color" content="#E8380D"/>
+<link rel="manifest" href="./manifest.json"/>
 <link rel="icon" type="image/png" href="https://i.imgur.com/8YqKQNJ.png"/>
 <title>Hotmart – Transacciones</title>
 <style>
@@ -821,6 +823,18 @@ function addRowToTable(data) {
 // ══════════════════════════════════════
 //  PUSH NOTIFICATIONS
 // ══════════════════════════════════════
+
+// Register Service Worker for mobile support
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js')
+    .then(registration => {
+      console.log('Service Worker registered:', registration);
+    })
+    .catch(error => {
+      console.log('Service Worker registration failed:', error);
+    });
+}
+
 function requestNotificationPermission() {
   if (!('Notification' in window)) {
     alert('Tu navegador no soporta notificaciones push');
