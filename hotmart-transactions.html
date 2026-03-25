@@ -845,7 +845,8 @@ function buildPayCell(method) {
 // ══════════════════════════════════════
 function addRowToTable(data) {
   const tbody = document.getElementById('txBody');
-  const now   = new Date();
+  // Use the sale's actual timestamp if available, otherwise use current time
+  const now   = data.ts ? new Date(data.ts) : new Date();
   const dd    = String(now.getDate()).padStart(2,'0');
   const mm    = String(now.getMonth()+1).padStart(2,'0');
   const yy    = now.getFullYear();
@@ -1141,6 +1142,7 @@ function fetchNewSales() {
           return isNew;
         })
         .sort((a, b) => a[1].ts - b[1].ts);
+      console.log('newEntries count:', newEntries.length);
       newEntries.forEach(([key, d]) => {
         seenKeys.add(key);
         lastTs = Math.max(lastTs, d.ts);
