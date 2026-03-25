@@ -1115,6 +1115,7 @@ function fetchNewSales() {
         .filter(d => d && d.ts && d.ts > lastTs);
       
       const wasFirstLoad = isFirstLoad;
+      console.log('wasFirstLoad:', wasFirstLoad, 'newSales:', newSales.length, 'lastTs:', lastTs);
       
       newSales
         .sort((a,b) => a.ts - b.ts)
