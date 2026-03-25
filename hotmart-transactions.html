@@ -610,8 +610,8 @@ function uploadLogo(input) {
   reader.readAsDataURL(file);
 }
 
-// Restore logo from localStorage on load
-window.addEventListener('DOMContentLoaded', function() {
+// Restore logo from localStorage on load (synchronous — DOM is ready at bottom of body)
+(function() {
   const saved = localStorage.getItem('hm_logo');
   if (saved) {
     const img = document.getElementById('logoImg');
@@ -619,7 +619,7 @@ window.addEventListener('DOMContentLoaded', function() {
     if (img) { img.src = saved; img.style.display='block'; }
     if (placeholder) placeholder.style.display='none';
   }
-});
+})();
 
 // ══════════════════════════════════════
 //  NAVIGATION
@@ -821,28 +821,28 @@ const FB_URL = 'https://pagina-hotmart-default-rtdb.firebaseio.com/ventas.json';
 let lastTs = 0;
 
 function fetchNewSales() {
-  fetch(`${FB_URL}?orderBy="ts"&startAt=${lastTs}`)
+  const isFirstLoad = (lastTs === 0);
+  fetch(FB_URL)
     .then(r => r.json())
     .then(data => {
-      console.log('Firebase data:', data);
-      if (!data) {
-        console.log('No data from Firebase');
+      if (!data || data.error) {
+        console.warn('Firebase no devolvió datos o falta el índice .indexOn en "ts":', data && data.error);
         return;
       }
       const allSales = Object.values(data);
-      console.log('Total sales in response:', allSales.length);
-      const newSales = allSales.filter(d => d.ts > lastTs);
-      console.log('New sales found:', newSales.length, 'lastTs:', lastTs);
+      const newSales = allSales.filter(d => d && d.ts && d.ts > lastTs);
       newSales
         .sort((a,b) => a.ts - b.ts)
         .forEach(d => {
-          console.log('Adding sale:', d);
           lastTs = d.ts + 1;
           const amt = parseFloat(d.amount);
           addRowToTable(d);
           updateTotal(amt);
-          updateSessionStats(amt);
-          showToast(d.buyer, d.product, d.amount, d.payMethod);
+          if (!isFirstLoad) {
+            // Solo mostrar toast para ventas realmente nuevas, no al cargar historial
+            updateSessionStats(amt);
+            showToast(d.buyer, d.product, d.amount, d.payMethod);
+          }
         });
     })
     .catch(() => {});
@@ -873,6 +873,7 @@ function doSubmit() {
   // Publicar en Firebase para otros dispositivos
   fetch('https://pagina-hotmart-default-rtdb.firebaseio.com/ventas.json', {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(saleData)
   }).catch(() => {});
 
