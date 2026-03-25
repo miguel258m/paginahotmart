@@ -1017,9 +1017,17 @@ function showPushNotification(buyer, product, amount) {
   }
 }
 
+let _audioCtx = null;
+function getAudioCtx() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (_audioCtx.state === 'suspended') _audioCtx.resume();
+  return _audioCtx;
+}
+document.addEventListener('click', () => getAudioCtx(), { once: true });
+
 function playNotificationSound() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = getAudioCtx();
     [[660, 0, 0.12], [880, 0.13, 0.18], [1100, 0.32, 0.28]].forEach(([freq, delay, dur]) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
