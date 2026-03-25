@@ -821,7 +821,6 @@ const FB_URL = 'https://pagina-hotmart-default-rtdb.firebaseio.com/ventas.json';
 let lastTs = 0;
 
 function fetchNewSales() {
-  const isFirstLoad = (lastTs === 0);
   fetch(FB_URL)
     .then(r => r.json())
     .then(data => {
@@ -838,8 +837,8 @@ function fetchNewSales() {
           const amt = parseFloat(d.amount);
           addRowToTable(d);
           updateTotal(amt);
-          if (!isFirstLoad) {
-            // Solo mostrar toast para ventas realmente nuevas, no al cargar historial
+          if (lastTs > 0) {
+            // Solo mostrar toast para ventas realmente nuevas, no al cargar historial inicial
             updateSessionStats(amt);
             showToast(d.buyer, d.product, d.amount, d.payMethod);
           }
