@@ -1133,8 +1133,13 @@ function fetchNewSales() {
     .then(r => r.json())
     .then(data => {
       if (!data) return;
+      const allKeys = Object.keys(data);
       const newEntries = Object.entries(data)
-        .filter(([key, d]) => d && d.ts && !seenKeys.has(key))
+        .filter(([key, d]) => {
+          const isNew = d && d.ts && !seenKeys.has(key);
+          if (isNew) console.log('New entry found:', key, d.buyer);
+          return isNew;
+        })
         .sort((a, b) => a[1].ts - b[1].ts);
       newEntries.forEach(([key, d]) => {
         seenKeys.add(key);
