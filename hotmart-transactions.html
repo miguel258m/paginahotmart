@@ -222,6 +222,15 @@ td{padding:12px 14px;vertical-align:middle;color:#374151;}
 
 @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
 @keyframes row-flash{0%{background:#f0fdf4;}100%{background:transparent;}}
+
+/* ── Dropdown menu ── */
+.dropdown{position:relative;display:inline-block;}
+.dropdown-menu{display:none;position:absolute;right:0;top:32px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:999;min-width:140px;overflow:hidden;}
+.dropdown-menu.show{display:block;}
+.dropdown-item{padding:10px 16px;font-size:13px;color:#374151;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .1s;}
+.dropdown-item:hover{background:#f9fafb;}
+.dropdown-item.danger{color:#e11d48;}
+.dropdown-item.danger:hover{background:#fff1f2;}
 </style>
 </head>
 <body>
@@ -279,9 +288,12 @@ td{padding:12px 14px;vertical-align:middle;color:#374151;}
     <div class="topbar-hamburger">
       <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </div>
-    <div class="hotmart-logo" onclick="document.getElementById('logoUploadInput').click()" title="Haz clic para subir tu logo" style="cursor:pointer;">
-      <img id="logoImg" alt="Logo" width="36" height="36" style="object-fit:contain;display:none;border-radius:50%;"/>
-      <div id="logoPlaceholder" style="width:36px;height:36px;border-radius:50%;background:#fff3ee;border:2px dashed #E8380D;display:flex;align-items:center;justify-content:center;font-size:8px;color:#E8380D;text-align:center;line-height:1.2;font-weight:600;">LOGO</div>
+    <div class="hotmart-logo" style="cursor:default;">
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="18" cy="18" r="18" fill="#E8380D"/>
+        <path d="M18 8C18 8 10 13 10 19.5C10 23.6 13.6 27 18 27C22.4 27 26 23.6 26 19.5C26 13 18 8 18 8Z" fill="white"/>
+        <circle cx="18" cy="19.5" r="4" fill="#E8380D"/>
+      </svg>
       <span>hotmart</span>
     </div>
     <input type="file" id="logoUploadInput" accept="image/*" style="display:none;" onchange="uploadLogo(this)"/>
@@ -766,6 +778,27 @@ function showToast(buyer, product, amount, payMethod) {
   if(all.length > 3) all[0].remove();
 }
 
+// ── Dropdown menu
+function toggleDropdown(btn) {
+  document.querySelectorAll('.dropdown-menu.show').forEach(m => {
+    if (m !== btn.nextElementSibling) m.classList.remove('show');
+  });
+  btn.nextElementSibling.classList.toggle('show');
+}
+
+function deleteRow(item) {
+  const row = item.closest('tr');
+  row.style.transition = 'opacity 0.3s';
+  row.style.opacity = '0';
+  setTimeout(() => row.remove(), 300);
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.dropdown')) {
+    document.querySelectorAll('.dropdown-menu.show').forEach(m => m.classList.remove('show'));
+  }
+});
+
 function escHtml(str) {
   return String(str)
     .replace(/&/g,'&amp;')
@@ -809,7 +842,7 @@ function addRowToTable(data) {
     <td>${buildPayCell(data.payMethod)}</td>
     <td class="amt"><span class="editable" contenteditable="true">USD$ ${parseFloat(data.amount).toFixed(2).replace('.',',')}</span></td>
     <td><select class="status-select sel-aprobada"><option value="aprobada" selected>Aprobada</option><option value="completa">Completa</option><option value="pendiente">Pendiente</option><option value="cancelada">Cancelada</option><option value="reembolso">Reembolso</option></select></td>
-    <td><button class="act-btn">⋮</button></td>
+    <td><div class="dropdown"><button class="act-btn" onclick="toggleDropdown(this)">⋮</button><div class="dropdown-menu"><div class="dropdown-item danger" onclick="deleteRow(this)">🗑 Eliminar</div></div></div></td>
   `;
   // Flash green background
   tr.style.background = '#f0fdf4';
@@ -1171,3 +1204,4 @@ function resetForm() {
 </script>
 </body>
 </html>
+
