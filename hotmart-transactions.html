@@ -1018,12 +1018,17 @@ function showPushNotification(buyer, product, amount) {
 }
 
 let _audioCtx = null;
+let _pendingSound = false;
 try { _audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
 function unlockAudio() {
   if (!_audioCtx) {
     try { _audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return; }
   }
-  if (_audioCtx.state === 'suspended') _audioCtx.resume().catch(() => {});
+  if (_audioCtx.state === 'suspended') {
+    _audioCtx.resume().then(() => {
+      if (_pendingSound) { _pendingSound = false; playNotificationSound(); }
+    }).catch(() => {});
+  }
 }
 ['click','keydown','touchstart','mousedown'].forEach(e =>
   document.addEventListener(e, unlockAudio, { passive: true })
@@ -1031,7 +1036,7 @@ function unlockAudio() {
 
 function playNotificationSound() {
   if (!_audioCtx) return;
-  if (_audioCtx.state === 'suspended') { _audioCtx.resume().then(() => playNotificationSound()).catch(() => {}); return; }
+  if (_audioCtx.state === 'suspended') { _pendingSound = true; return; }
   try {
     const ctx = _audioCtx;
     // Monedas cayendo: tings metálicos escalonados
