@@ -1035,19 +1035,40 @@ function playNotificationSound() {
   try {
     const ctx = _audioCtx;
     if (ctx.state === 'suspended') { ctx.resume(); return; }
-    [[660, 0, 0.12], [880, 0.13, 0.18], [1100, 0.32, 0.28]].forEach(([freq, delay, dur]) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0, ctx.currentTime + delay);
-      gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + delay + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + dur);
-      osc.start(ctx.currentTime + delay);
-      osc.stop(ctx.currentTime + delay + dur);
-    });
+
+    // "Ka" - golpe percusivo de caja registradora
+    const thump = ctx.createOscillator();
+    const thumpGain = ctx.createGain();
+    thump.connect(thumpGain); thumpGain.connect(ctx.destination);
+    thump.type = 'sine';
+    thump.frequency.setValueAtTime(320, ctx.currentTime);
+    thump.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.09);
+    thumpGain.gain.setValueAtTime(0.5, ctx.currentTime);
+    thumpGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+    thump.start(ctx.currentTime); thump.stop(ctx.currentTime + 0.11);
+
+    // "Ching" - ring metálico principal
+    const ring = ctx.createOscillator();
+    const ringGain = ctx.createGain();
+    ring.connect(ringGain); ringGain.connect(ctx.destination);
+    ring.type = 'sine';
+    ring.frequency.value = 1760;
+    ringGain.gain.setValueAtTime(0, ctx.currentTime + 0.06);
+    ringGain.gain.linearRampToValueAtTime(0.35, ctx.currentTime + 0.08);
+    ringGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7);
+    ring.start(ctx.currentTime + 0.06); ring.stop(ctx.currentTime + 0.75);
+
+    // Armónico alto para brillo metálico
+    const shimmer = ctx.createOscillator();
+    const shimmerGain = ctx.createGain();
+    shimmer.connect(shimmerGain); shimmerGain.connect(ctx.destination);
+    shimmer.type = 'sine';
+    shimmer.frequency.value = 2640;
+    shimmerGain.gain.setValueAtTime(0, ctx.currentTime + 0.06);
+    shimmerGain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 0.08);
+    shimmerGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+    shimmer.start(ctx.currentTime + 0.06); shimmer.stop(ctx.currentTime + 0.5);
+
   } catch (e) {}
 }
 
