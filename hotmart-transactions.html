@@ -313,6 +313,8 @@ td{padding:12px 14px;vertical-align:middle;color:#374151;}
     </div>
   </header>
 
+  <audio id="notifSound" src="sound.mp4" preload="auto"></audio>
+
   <!-- Banner activar sonido -->
   <div id="soundBanner" style="display:none;background:#059669;color:#fff;text-align:center;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;" onclick="activateSound()">
     🔊 Toca aquí para activar el sonido de notificaciones
@@ -1022,59 +1024,31 @@ function showPushNotification(buyer, product, amount) {
   }
 }
 
-let _audioCtx = null;
-let _pendingSound = false;
-try { _audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
-
-function unlockAudio() {
-  if (!_audioCtx) {
-    try { _audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return; }
-  }
-  if (_audioCtx.state === 'suspended') {
-    _audioCtx.resume().then(() => {
-      if (_pendingSound) { _pendingSound = false; playNotificationSound(); }
-    }).catch(() => {});
-  }
-}
-['click','keydown','touchstart','mousedown'].forEach(e =>
-  document.addEventListener(e, unlockAudio, { passive: true })
-);
+let _soundUnlocked = false;
 
 function activateSound() {
-  unlockAudio();
+  const audio = document.getElementById('notifSound');
+  audio.play().then(() => { audio.pause(); audio.currentTime = 0; _soundUnlocked = true; }).catch(() => {});
   document.getElementById('soundBanner').style.display = 'none';
   localStorage.setItem('soundActivated', '1');
-  playNotificationSound();
+  _soundUnlocked = true;
 }
 
 // Mostrar banner si el sonido no fue activado antes
 window.addEventListener('DOMContentLoaded', () => {
   if (!localStorage.getItem('soundActivated')) {
     document.getElementById('soundBanner').style.display = 'block';
+  } else {
+    _soundUnlocked = true;
   }
 });
 
 function playNotificationSound() {
-  if (!_audioCtx) return;
-  if (_audioCtx.state === 'suspended') { _pendingSound = true; return; }
-  try {
-    const ctx = _audioCtx;
-    // Monedas cayendo: tings metálicos escalonados
-    [[1200, 0.00, 0.30], [1450, 0.05, 0.25], [1050, 0.09, 0.22],
-     [1600, 0.13, 0.18], [1300, 0.17, 0.15], [1750, 0.20, 0.12]].forEach(([freq, delay, dur]) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0, ctx.currentTime + delay);
-      gain.gain.linearRampToValueAtTime(0.22, ctx.currentTime + delay + 0.008);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + dur);
-      osc.start(ctx.currentTime + delay);
-      osc.stop(ctx.currentTime + delay + dur);
-    });
-  } catch (e) {}
+  if (!_soundUnlocked) return;
+  const audio = document.getElementById('notifSound');
+  if (!audio) return;
+  audio.currentTime = 0;
+  audio.play().catch(() => {});
 }
 
 function showInPageAlert(buyer, product, amount) {
