@@ -1028,19 +1028,17 @@ let _soundUnlocked = false;
 
 function activateSound() {
   const audio = document.getElementById('notifSound');
-  audio.play().then(() => { audio.pause(); audio.currentTime = 0; _soundUnlocked = true; }).catch(() => {});
-  document.getElementById('soundBanner').style.display = 'none';
-  localStorage.setItem('soundActivated', '1');
-  _soundUnlocked = true;
+  audio.play().then(() => {
+    audio.pause();
+    audio.currentTime = 0;
+    _soundUnlocked = true;
+    document.getElementById('soundBanner').style.display = 'none';
+  }).catch(() => {});
 }
 
-// Mostrar banner si el sonido no fue activado antes
+// Mostrar banner siempre al cargar (el navegador requiere gesto por sesión)
 window.addEventListener('DOMContentLoaded', () => {
-  if (!localStorage.getItem('soundActivated')) {
-    document.getElementById('soundBanner').style.display = 'block';
-  } else {
-    _soundUnlocked = true;
-  }
+  document.getElementById('soundBanner').style.display = 'block';
 });
 
 function playNotificationSound() {
