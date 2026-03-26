@@ -1018,24 +1018,22 @@ function showPushNotification(buyer, product, amount) {
 }
 
 let _audioCtx = null;
-let _audioUnlocked = false;
+try { _audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
 function unlockAudio() {
-  if (_audioUnlocked) return;
-  try {
-    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    _audioUnlocked = true;
-  } catch(e) {}
+  if (!_audioCtx) {
+    try { _audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return; }
+  }
+  if (_audioCtx.state === 'suspended') _audioCtx.resume().catch(() => {});
 }
 ['click','keydown','touchstart','mousedown'].forEach(e =>
   document.addEventListener(e, unlockAudio, { passive: true })
 );
 
 function playNotificationSound() {
-  unlockAudio();
-  if (!_audioUnlocked || !_audioCtx) return;
+  if (!_audioCtx) return;
+  if (_audioCtx.state === 'suspended') { _audioCtx.resume().then(() => playNotificationSound()).catch(() => {}); return; }
   try {
     const ctx = _audioCtx;
-    if (ctx.state === 'suspended') { ctx.resume().then(() => playNotificationSound()); return; }
     // Monedas cayendo: tings metálicos escalonados
     [[1200, 0.00, 0.30], [1450, 0.05, 0.25], [1050, 0.09, 0.22],
      [1600, 0.13, 0.18], [1300, 0.17, 0.15], [1750, 0.20, 0.12]].forEach(([freq, delay, dur]) => {
