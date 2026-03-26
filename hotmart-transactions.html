@@ -313,6 +313,11 @@ td{padding:12px 14px;vertical-align:middle;color:#374151;}
     </div>
   </header>
 
+  <!-- Banner activar sonido -->
+  <div id="soundBanner" style="display:none;background:#059669;color:#fff;text-align:center;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;" onclick="activateSound()">
+    🔊 Toca aquí para activar el sonido de notificaciones
+  </div>
+
   <!-- ════════════════════════════
        PAGE 1 — TRANSACTIONS
   ════════════════════════════ -->
@@ -1020,6 +1025,7 @@ function showPushNotification(buyer, product, amount) {
 let _audioCtx = null;
 let _pendingSound = false;
 try { _audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+
 function unlockAudio() {
   if (!_audioCtx) {
     try { _audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return; }
@@ -1033,6 +1039,20 @@ function unlockAudio() {
 ['click','keydown','touchstart','mousedown'].forEach(e =>
   document.addEventListener(e, unlockAudio, { passive: true })
 );
+
+function activateSound() {
+  unlockAudio();
+  document.getElementById('soundBanner').style.display = 'none';
+  localStorage.setItem('soundActivated', '1');
+  playNotificationSound();
+}
+
+// Mostrar banner si el sonido no fue activado antes
+window.addEventListener('DOMContentLoaded', () => {
+  if (!localStorage.getItem('soundActivated')) {
+    document.getElementById('soundBanner').style.display = 'block';
+  }
+});
 
 function playNotificationSound() {
   if (!_audioCtx) return;
