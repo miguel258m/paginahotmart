@@ -1031,6 +1031,7 @@ function unlockAudio() {
 );
 
 function playNotificationSound() {
+  unlockAudio();
   if (!_audioUnlocked || !_audioCtx) return;
   try {
     const ctx = _audioCtx;
