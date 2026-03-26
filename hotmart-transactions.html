@@ -1034,7 +1034,7 @@ function playNotificationSound() {
   if (!_audioUnlocked || !_audioCtx) return;
   try {
     const ctx = _audioCtx;
-    if (ctx.state === 'suspended') { ctx.resume(); return; }
+    if (ctx.state === 'suspended') { ctx.resume().then(() => playNotificationSound()); return; }
 
     // "Ka" - golpe percusivo de caja registradora
     const thump = ctx.createOscillator();
