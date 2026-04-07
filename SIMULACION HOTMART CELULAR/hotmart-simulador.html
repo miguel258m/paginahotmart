@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hotmart – Panel de Ventas</title>
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#FF6900">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Hotmart">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+    }
+
+    /* ── TOP NAV ── */
+    .navbar {
+      background: #ff6900;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 56px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    }
+    .navbar-logo { display: flex; align-items: center; gap: 10px; }
+    .navbar-logo svg { width: 34px; height: 34px; }
+    .navbar-logo span { color: #fff; font-size: 22px; font-weight: 700; letter-spacing: .5px; }
+    .navbar-right { display: flex; align-items: center; gap: 18px; }
+    .navbar-right .avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: #fff3; color: #fff; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; cursor: pointer;
+    }
+    .navbar-right .bell { color: #ffffffcc; font-size: 20px; cursor: pointer; }
+
+    /* ── SIDEBAR ── */
+    .layout { display: flex; min-height: calc(100vh - 56px); }
+    .sidebar {
+      width: 220px; background: #1a1a2e; color: #ccc;
+      padding: 20px 0; flex-shrink: 0;
+    }
+    .sidebar-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 22px; cursor: pointer; font-size: 14px;
+      transition: background .2s;
+    }
+    .sidebar-item:hover { background: #ffffff18; }
+    .sidebar-item.active { background: #ff6900; color: #fff; font-weight: 600; }
+    .sidebar-item .icon { font-size: 18px; width: 22px; text-align: center; }
+    .sidebar-divider { border-top: 1px solid #ffffff18; margin: 12px 0; }
+
+    /* ── MAIN ── */
+    .main { flex: 1; padding: 28px 32px; overflow-x: hidden; }
+
+    /* ── HEADER ROW ── */
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .page-header h1 { font-size: 22px; font-weight: 700; color: #222; }
+    .date-filter {
+      background: #fff; border: 1px solid #ddd; border-radius: 8px;
+      padding: 7px 16px; font-size: 13px; color: #555; cursor: pointer;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* ── METRIC CARDS ── */
+    .cards-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 28px; }
+    .card {
+      background: #fff; border-radius: 14px; padding: 22px 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    }
+    .card-label { font-size: 12px; color: #999; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+    .card-value { font-size: 28px; font-weight: 800; color: #222; margin: 6px 0 4px; }
+    .card-value.orange { color: #ff6900; }
+    .card-change { font-size: 12px; color: #22c55e; font-weight: 600; }
+    .card-change.red { color: #ef4444; }
+    .card-icon {
+      width: 42px; height: 42px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; margin-bottom: 10px;
+    }
+    .card-icon.green { background: #dcfce7; }
+    .card-icon.orange { background: #fff3e0; }
+    .card-icon.blue { background: #dbeafe; }
+    .card-icon.purple { background: #f3e8ff; }
+
+    /* ── TWO-COL SECTION ── */
+    .two-col { display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; margin-bottom: 28px; }
+
+    /* ── CHART BOX ── */
+    .box {
+      background: #fff; border-radius: 14px; padding: 22px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    }
+    .box-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .box-title { font-size: 15px; font-weight: 700; color: #222; }
+    .box-subtitle { font-size: 12px; color: #aaa; margin-top: 2px; }
+
+    /* Simple bar chart */
+    .chart-bars { display: flex; align-items: flex-end; gap: 8px; height: 140px; }
+    .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+    .bar {
+      width: 100%; border-radius: 6px 6px 0 0; background: #ff6900;
+      transition: height .4s; position: relative; cursor: pointer;
+    }
+    .bar:hover { background: #e65c00; }
+    .bar.light { background: #ffd2b3; }
+    .bar-label { font-size: 10px; color: #999; }
+
+    /* ── PRODUCTS LIST ── */
+    .product-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+    .product-item:last-child { border-bottom: none; }
+    .product-thumb {
+      width: 38px; height: 38px; border-radius: 8px;
+      background: linear-gradient(135deg,#ff6900,#ff9a3c);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 16px; flex-shrink: 0;
+    }
+    .product-name { font-size: 13px; font-weight: 600; color: #333; }
+    .product-units { font-size: 11px; color: #999; margin-top: 2px; }
+    .product-revenue { margin-left: auto; font-weight: 700; color: #222; font-size: 13px; }
+
+    /* ── SALES TABLE ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th { text-align: left; padding: 10px 14px; color: #999; font-weight: 600; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid #f0f0f0; }
+    tbody tr { transition: background .15s; cursor: default; }
+    tbody tr:hover { background: #fff8f4; }
+    tbody td { padding: 13px 14px; color: #444; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    }
+    .badge.approved { background: #dcfce7; color: #16a34a; }
+    .badge.refund   { background: #fee2e2; color: #dc2626; }
+    .badge.pending  { background: #fef9c3; color: #b45309; }
+    .buyer-info { display: flex; flex-direction: column; }
+    .buyer-name { font-weight: 600; color: #222; }
+    .buyer-email { font-size: 11px; color: #aaa; }
+    .method-icon { font-size: 16px; margin-right: 4px; }
+
+    /* ── NOTIFICATION TOAST ── */
+    #toast-container {
+      position: fixed; top: 70px; right: 20px; z-index: 9999;
+      display: flex; flex-direction: column; gap: 10px;
+      pointer-events: none;
+    }
+    .toast {
+      background: #fff; border-left: 4px solid #ff6900;
+      border-radius: 10px; padding: 14px 18px; min-width: 300px; max-width: 340px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.15);
+      animation: slideIn .4s ease; pointer-events: all;
+    }
+    .toast.out { animation: slideOut .4s ease forwards; }
+    .toast-title { font-weight: 700; color: #222; font-size: 13px; margin-bottom: 3px; }
+    .toast-body { font-size: 12px; color: #777; }
+    .toast-amount { font-size: 16px; font-weight: 800; color: #ff6900; margin-top: 4px; }
+    @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOut { to { transform: translateX(120%); opacity: 0; } }
+
+    /* ── CONTROLS ── */
+    .controls-bar {
+      background: #fff; border-radius: 14px; padding: 16px 22px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06); margin-bottom: 22px;
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    }
+    .controls-bar label { font-size: 13px; font-weight: 600; color: #555; }
+    .controls-bar input[type=range] { accent-color: #ff6900; cursor: pointer; }
+    .btn {
+      background: #ff6900; color: #fff; border: none; border-radius: 8px;
+      padding: 9px 18px; font-size: 13px; font-weight: 700; cursor: pointer;
+      transition: background .2s;
+    }
+    .btn:hover { background: #e05d00; }
+    .btn.outline {
+      background: transparent; border: 2px solid #ff6900; color: #ff6900;
+    }
+    .btn.outline:hover { background: #fff3e0; }
+
+    @media (max-width: 900px) {
+      .cards-row { grid-template-columns: repeat(2,1fr); }
+      .two-col { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar-logo">
+    <!-- Hotmart-style flame icon -->
+    <svg viewBox="0 0 40 40" fill="none">
+      <circle cx="20" cy="20" r="20" fill="white"/>
+      <path d="M20 8 C14 14 10 18 14 24 C16 28 20 30 20 30 C20 30 24 28 26 24 C30 18 26 14 20 8Z" fill="#ff6900"/>
+      <path d="M20 18 C18 20 17 22 19 25 C20 27 20 28 20 28 C20 28 21 27 22 25 C24 22 22 20 20 18Z" fill="white"/>
+    </svg>
+    <span>hotmart</span>
+  </div>
+  <div class="navbar-right">
+    <span class="bell">🔔</span>
+    <span class="bell">⚙️</span>
+    <div class="avatar">M</div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-item active"><span class="icon">📊</span> Dashboard</div>
+    <div class="sidebar-item"><span class="icon">💰</span> Ventas</div>
+    <div class="sidebar-item"><span class="icon">📦</span> Productos</div>
+    <div class="sidebar-item"><span class="icon">👥</span> Afiliados</div>
+    <div class="sidebar-item"><span class="icon">📧</span> Comunicación</div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-item"><span class="icon">💳</span> Finanzas</div>
+    <div class="sidebar-item"><span class="icon">📈</span> Informes</div>
+    <div class="sidebar-item"><span class="icon">🔧</span> Configuración</div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <div class="page-header">
+      <div>
+        <h1>Panel de Control</h1>
+        <p style="font-size:13px;color:#aaa;margin-top:4px;">Bienvenido, Miguel 👋  — Últimas 24 horas</p>
+      </div>
+      <div class="date-filter">📅 Hoy · <strong id="fecha-actual"></strong></div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="controls-bar">
+      <label>⚡ Intervalo de ventas:</label>
+      <input type="range" id="intervalRange" min="3" max="20" value="7" style="width:120px">
+      <span id="intervalLabel" style="font-size:12px;color:#ff6900;font-weight:700">7 s</span>
+      <button class="btn" id="toggleBtn" onclick="toggleSales()">⏸ Pausar ventas</button>
+      <button class="btn outline" onclick="addManualSale()">➕ Venta manual</button>
+      <button class="btn outline" onclick="resetStats()">🔄 Reiniciar</button>
+      <button class="btn" id="notif-btn" onclick="pedirPermisoNotificaciones()" style="background:#6366f1">🔔 Activar notificaciones</button>
+      <label style="cursor:pointer;">
+        <span class="btn outline" style="display:inline-flex;align-items:center;gap:6px">
+          🖼️ <span id="logo-label">Subir logo</span>
+        </span>
+        <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="cargarLogo(this)">
+      </label>
+      <img id="logo-preview" style="width:32px;height:32px;border-radius:8px;display:none;object-fit:cover;border:2px solid #ff6900">
+    </div>
+
+    <!-- METRIC CARDS -->
+    <div class="cards-row">
+      <div class="card">
+        <div class="card-icon green">💵</div>
+        <div class="card-label">Ingresos hoy</div>
+        <div class="card-value orange" id="stat-revenue">US$ 0.00</div>
+        <div class="card-change">▲ <span id="stat-rev-pct">0</span>% vs ayer</div>
+      </div>
+      <div class="card">
+        <div class="card-icon orange">🛒</div>
+        <div class="card-label">Ventas hoy</div>
+        <div class="card-value" id="stat-sales">0</div>
+        <div class="card-change">▲ <span id="stat-sales-pct">0</span>% vs ayer</div>
+      </div>
+      <div class="card">
+        <div class="card-icon blue">👤</div>
+        <div class="card-label">Nuevos compradores</div>
+        <div class="card-value" id="stat-buyers">0</div>
+        <div class="card-change">▲ <span id="stat-buyers-pct">0</span>% vs ayer</div>
+      </div>
+      <div class="card">
+        <div class="card-icon purple">💎</div>
+        <div class="card-label">Ticket promedio</div>
+        <div class="card-value" id="stat-avg">US$ 0.00</div>
+        <div class="card-change red">▼ <span id="stat-avg-pct">0</span>% vs ayer</div>
+      </div>
+    </div>
+
+    <!-- CHART + TOP PRODUCTS -->
+    <div class="two-col">
+      <div class="box">
+        <div class="box-header">
+          <div>
+            <div class="box-title">Ventas por hora</div>
+            <div class="box-subtitle">Últimas 8 horas</div>
+          </div>
+          <span style="font-size:12px;color:#ff6900;font-weight:700" id="chart-total">US$ 0</span>
+        </div>
+        <div class="chart-bars" id="chart-bars"></div>
+        <div style="display:flex;gap:8px;margin-top:6px;" id="chart-labels"></div>
+      </div>
+
+      <div class="box">
+        <div class="box-header">
+          <div class="box-title">Top Productos</div>
+        </div>
+        <div id="top-products"></div>
+      </div>
+    </div>
+
+    <!-- SALES TABLE -->
+    <div class="box">
+      <div class="box-header">
+        <div>
+          <div class="box-title">Últimas Transacciones</div>
+          <div class="box-subtitle" id="trans-count">0 transacciones</div>
+        </div>
+        <button class="btn outline" style="font-size:12px;padding:6px 12px" onclick="exportCSV()">⬇ Exportar CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Comprador</th>
+              <th>Producto</th>
+              <th>Monto</th>
+              <th>Método</th>
+              <th>Estado</th>
+              <th>Hora</th>
+              <th>Código</th>
+            </tr>
+          </thead>
+          <tbody id="sales-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+const PRODUCTS = [
+  { name: "Curso Marketing Digital Pro",  emoji: "🎯", price: 97  },
+  { name: "Pack Instagram Completo",       emoji: "📸", price: 47  },
+  { name: "Mentoria 1:1 VIP",             emoji: "🏆", price: 197 },
+  { name: "Ebook: Ventas en Redes",       emoji: "📖", price: 17  },
+  { name: "Masterclass Facebook Ads",     emoji: "📢", price: 77  },
+  { name: "Plantillas Canva Premium",     emoji: "🎨", price: 27  },
+  { name: "Copywriting Magnético",        emoji: "✍️", price: 57  },
+];
+
+const NAMES = [
+  "Carlos Rodríguez","Ana Martínez","Luis García","María López","Jorge Hernández",
+  "Patricia Jiménez","Roberto Díaz","Sofía Torres","Eduardo Ramírez","Valeria Castro",
+  "Fernando Morales","Daniela Vega","Alejandro Ruiz","Isabella Sánchez","Nicolás Flores",
+  "Camila Ortega","Sebastián Mendoza","Lucía Reyes","Mateo Álvarez","Valentina Cruz",
+  "Andrés Gutiérrez","Mariana Romero","Diego Navarro","Paula Serrano","Juan Domínguez",
+];
+
+const DOMAINS = ["gmail.com","hotmail.com","yahoo.com","outlook.com","icloud.com"];
+const METHODS = [
+  { label: "Tarjeta de crédito", icon: "💳" },
+  { label: "PIX",                icon: "⚡" },
+  { label: "PayPal",             icon: "🅿️" },
+  { label: "Boleto",             icon: "🧾" },
+];
+
+// ─── STATE ──────────────────────────────────────────────────────────────────
+let sales        = [];
+let totalRevenue = 0;
+let running      = true;
+let timerID      = null;
+let hourlyData   = new Array(8).fill(0);
+let productStats = {};
+
+PRODUCTS.forEach(p => productStats[p.name] = { units: 0, rev: 0 });
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+const rand = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+const pick  = arr  => arr[rand(0,arr.length-1)];
+
+function fmtMoney(v){ return "US$ " + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,","); }
+
+function nowHHMM(){
+  const d = new Date();
+  return d.toTimeString().slice(0,5);
+}
+
+function randomCode(){
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let c = "HP";
+  for(let i=0;i<10;i++) c += chars[rand(0,chars.length-1)];
+  return c;
+}
+
+// ─── SALE GENERATOR ─────────────────────────────────────────────────────────
+function generateSale(manual){
+  const product = pick(PRODUCTS);
+  // small random variance ±15%
+  const variance = (Math.random() * .3 - .15);
+  const amount   = +(product.price * (1 + variance)).toFixed(2);
+  const name     = pick(NAMES);
+  const email    = name.split(" ")[0].toLowerCase() + rand(10,999) + "@" + pick(DOMAINS);
+  const method   = pick(METHODS);
+  const code     = randomCode();
+  const time     = nowHHMM();
+
+  return { product, amount, name, email, method, code, time };
+}
+
+// ─── ADD SALE ───────────────────────────────────────────────────────────────
+function addSale(sale){
+  totalRevenue += sale.amount;
+  sales.unshift(sale);
+
+  // update product stats
+  productStats[sale.product.name].units += 1;
+  productStats[sale.product.name].rev   += sale.amount;
+
+  // update hourly
+  const h = new Date().getHours() % 8;
+  hourlyData[h] += sale.amount;
+
+  updateStats();
+  updateTable();
+  updateChart();
+  updateTopProducts();
+  showToast(sale);
+}
+
+function addManualSale(){ addSale(generateSale(true)); }
+
+// ─── STATS ──────────────────────────────────────────────────────────────────
+function updateStats(){
+  document.getElementById("stat-revenue").textContent = fmtMoney(totalRevenue);
+  document.getElementById("stat-sales"  ).textContent = sales.length;
+  document.getElementById("stat-buyers" ).textContent = sales.length;
+  const avg = sales.length ? totalRevenue / sales.length : 0;
+  document.getElementById("stat-avg"    ).textContent = fmtMoney(avg);
+
+  // fake % vs yesterday (grows over time)
+  const base = Math.min(sales.length * 3, 999);
+  document.getElementById("stat-rev-pct"   ).textContent = (base + rand(0,12));
+  document.getElementById("stat-sales-pct" ).textContent = (base + rand(0,8));
+  document.getElementById("stat-buyers-pct").textContent = (base + rand(0,6));
+  document.getElementById("stat-avg-pct"   ).textContent = rand(1,5);
+}
+
+// ─── TABLE ──────────────────────────────────────────────────────────────────
+function updateTable(){
+  const tbody = document.getElementById("sales-tbody");
+  document.getElementById("trans-count").textContent = sales.length + " transacciones";
+
+  // rebuild first 40 rows
+  const rows = sales.slice(0,40).map(s => `
+    <tr>
+      <td>
+        <div class="buyer-info">
+          <span class="buyer-name">${s.name}</span>
+          <span class="buyer-email">${s.email}</span>
+        </div>
+      </td>
+      <td>${s.product.emoji} ${s.product.name}</td>
+      <td><strong style="color:#ff6900">${fmtMoney(s.amount)}</strong></td>
+      <td><span class="method-icon">${s.method.icon}</span>${s.method.label}</td>
+      <td><span class="badge approved">✔ Aprobada</span></td>
+      <td>${s.time}</td>
+      <td style="font-size:11px;color:#aaa">${s.code}</td>
+    </tr>
+  `).join("");
+  tbody.innerHTML = rows;
+}
+
+// ─── CHART ──────────────────────────────────────────────────────────────────
+function updateChart(){
+  const bars  = document.getElementById("chart-bars");
+  const lbls  = document.getElementById("chart-labels");
+  const total = hourlyData.reduce((a,b)=>a+b,0);
+  document.getElementById("chart-total").textContent = fmtMoney(total);
+
+  const max = Math.max(...hourlyData,1);
+  const now = new Date().getHours();
+
+  bars.innerHTML = hourlyData.map((v,i)=>{
+    const pct = Math.round((v/max)*100);
+    const hr  = ((now - 7 + i + 24) % 24);
+    const isNow = i === (new Date().getHours()%8);
+    return `<div class="bar-wrap">
+      <div class="bar${isNow?"":" light"}" style="height:${Math.max(pct,3)}%" title="${fmtMoney(v)}"></div>
+    </div>`;
+  }).join("");
+
+  lbls.innerHTML = hourlyData.map((_,i)=>{
+    const hr = ((now - 7 + i + 24) % 24);
+    return `<div style="flex:1;text-align:center;font-size:10px;color:#aaa">${hr}:00</div>`;
+  }).join("");
+}
+
+// ─── TOP PRODUCTS ────────────────────────────────────────────────────────────
+function updateTopProducts(){
+  const sorted = Object.entries(productStats)
+    .map(([name,s]) => ({ name, ...s }))
+    .filter(p => p.units > 0)
+    .sort((a,b)=>b.rev-a.rev)
+    .slice(0,5);
+
+  const prod = PRODUCTS.find.bind(PRODUCTS);
+  document.getElementById("top-products").innerHTML = sorted.map(p=>{
+    const info = PRODUCTS.find(x=>x.name===p.name) || {};
+    return `<div class="product-item">
+      <div class="product-thumb">${info.emoji||"📦"}</div>
+      <div>
+        <div class="product-name">${p.name}</div>
+        <div class="product-units">${p.units} venta${p.units!==1?"s":""}</div>
+      </div>
+      <div class="product-revenue">${fmtMoney(p.rev)}</div>
+    </div>`;
+  }).join("") || '<p style="color:#aaa;font-size:13px;text-align:center;padding:20px">Sin ventas aún</p>';
+}
+
+// ─── VIBRACIÓN + ALERTA MÓVIL ────────────────────────────────────────────────
+function vibrar(){
+  if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
+}
+
+// contenedor de notificaciones estilo Hotmart
+function getNotifContainer(){
+  let c = document.getElementById("hotmart-notifs");
+  if(!c){
+    c = document.createElement("div");
+    c.id = "hotmart-notifs";
+    Object.assign(c.style,{
+      position:"fixed", top:"0", left:"0", right:"0",
+      zIndex:"99999", display:"flex", flexDirection:"column",
+      alignItems:"stretch", gap:"0", pointerEvents:"none"
+    });
+    document.body.appendChild(c);
+  }
+  return c;
+}
+
+function mostrarAlertaMovil(sale){
+  const container = getNotifContainer();
+  const isVentaEfectuada = Math.random() < 0.15;
+  const titulo = isVentaEfectuada
+    ? "Venta efectuada"
+    : "Venta realizada con " + sale.method.label.split(" ")[0] + "...";
+  const hora = sale.time;
+
+  const el = document.createElement("div");
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 16px 10px;">
+      <!-- icono llama hotmart -->
+      <div style="width:36px;height:36px;border-radius:10px;background:#ff6900;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="20" height="20" viewBox="0 0 40 40" fill="none">
+          <path d="M20 4 C12 12 8 18 13 26 C16 31 20 33 20 33 C20 33 24 31 27 26 C32 18 28 12 20 4Z" fill="white"/>
+          <path d="M20 16 C18 19 17 22 19 26 C20 28 20 29 20 29 C20 29 21 28 22 26 C24 22 22 19 20 16Z" fill="#ff6900"/>
+        </svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;font-weight:700;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px">${titulo}</span>
+          <span style="font-size:11px;color:#999;flex-shrink:0;margin-left:6px">${hora}</span>
+        </div>
+        <div style="font-size:12px;color:#555;margin-top:2px">
+          Tu comisión: <strong style="color:#111">${fmtMoney(sale.amount)}</strong> – ${sale.code}
+        </div>
+      </div>
+    </div>
+    <div style="height:1px;background:#e5e5e5;margin:0 16px"></div>
+  `;
+  Object.assign(el.style,{
+    background:"rgba(242,242,247,0.97)",
+    backdropFilter:"blur(20px)",
+    WebkitBackdropFilter:"blur(20px)",
+    pointerEvents:"all",
+    transform:"translateY(-100%)",
+    transition:"transform .35s cubic-bezier(.22,1,.36,1)",
+    borderBottom:"1px solid #ddd"
+  });
+
+  container.prepend(el);
+
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    el.style.transform = "translateY(0)";
+  }));
+
+  setTimeout(()=>{
+    el.style.transition = "transform .3s ease, opacity .3s ease";
+    el.style.transform = "translateY(-100%)";
+    el.style.opacity = "0";
+    setTimeout(()=>el.remove(), 320);
+  }, 4500);
+
+  // máximo 5 visibles
+  while(container.children.length > 5){
+    container.lastChild.remove();
+  }
+
+  vibrar();
+}
+
+// ─── LOGO PERSONALIZADO ──────────────────────────────────────────────────────
+let customIconUrl = null;
+
+async function cargarLogo(input){
+  const file = input.files[0];
+  if(!file) return;
+
+  // preview inmediato
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const prev = document.getElementById("logo-preview");
+    prev.src = e.target.result;
+    prev.style.display = "block";
+  };
+  reader.readAsDataURL(file);
+
+  document.getElementById("logo-label").textContent = "⏳ Subiendo...";
+
+  try {
+    const formData = new FormData();
+    formData.append('icon', file);
+    const res  = await fetch('/upload-icon', { method: 'POST', body: formData });
+    const data = await res.json();
+    if(data.success){
+      const t = Date.now();
+      customIconUrl = window.location.origin + '/custom-icon.png?t=' + t;
+      document.getElementById("logo-label").textContent = "✅ Logo cargado — Reinstala la app";
+      // Forzar actualización del manifest dinámicamente
+      const link = document.querySelector('link[rel="manifest"]');
+      if(link) link.href = './manifest.json?t=' + t;
+    } else {
+      document.getElementById("logo-label").textContent = "❌ Error al subir";
+    }
+  } catch(e) {
+    document.getElementById("logo-label").textContent = "❌ Error: " + e.message;
+  }
+}
+
+function getIconUrl(){
+  if(customIconUrl) return customIconUrl;
+  return window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/') + 'icon-192.png';
+}
+
+// ─── SERVICE WORKER + NOTIFICACIONES REALES ──────────────────────────────────
+let swRegistration = null;
+let notifPermission = Notification.permission;
+
+async function registrarSW(){
+  if(!('serviceWorker' in navigator)) return;
+  try {
+    swRegistration = await navigator.serviceWorker.register('./sw.js');
+    console.log('SW registrado');
+  } catch(e) { console.warn('SW error:', e); }
+}
+
+async function pedirPermisoNotificaciones(){
+  const btn = document.getElementById("notif-btn");
+  if(!("Notification" in window)){
+    btn.textContent = "❌ No soportado"; btn.style.background="#ef4444"; return;
+  }
+  const result = await Notification.requestPermission();
+  notifPermission = result;
+  if(result === "granted"){
+    btn.textContent = "🔔 Notificaciones ON";
+    btn.style.background = "#22c55e";
+    // notificación de prueba
+    enviarNotifNativa({ name:"Sistema", product:{ name:"Hotmart activado ✅", emoji:"🎉" }, amount:0, code:"TEST", method:{ label:"" } });
+  } else {
+    btn.textContent = "🔕 Permiso denegado";
+    btn.style.background = "#ef4444";
+  }
+}
+
+async function enviarNotifNativa(sale){
+  if(Notification.permission !== "granted") return;
+  const isEfectuada = Math.random() < 0.15;
+  const title = isEfectuada
+    ? "Venta efectuada"
+    : "Venta realizada con " + sale.method.label + "...";
+  const comision = (sale.amount * 0.80).toFixed(2); // simula comisión ~80%
+  const body = "Tu comisión: US$ " + comision + " – " + sale.code;
+  try {
+    // navigator.serviceWorker.ready espera a que el SW esté activo → siempre funciona
+    const reg = await navigator.serviceWorker.ready;
+    const iconUrl = window.location.origin + '/icon-192.png';
+    const badgeUrl = window.location.origin + '/transparent.png';
+    reg.showNotification(title, {
+      body: body,
+      tag: sale.code,
+      renotify: true,
+      vibrate: [200, 100, 200],
+      icon: badgeUrl,
+      badge: iconUrl
+    });
+  } catch(e) {
+    // fallback si SW falla
+    new Notification(title, { body, tag: sale.code, renotify: true });
+  }
+}
+
+// ─── TOAST ──────────────────────────────────────────────────────────────────
+function showToast(sale){
+  const tc   = document.getElementById("toast-container");
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.innerHTML = `
+    <div class="toast-title">🎉 ¡Venta realizada con ${sale.method.icon} ${sale.method.label.split(" ")[0]}!</div>
+    <div class="toast-body">${sale.name} compró <strong>${sale.product.name}</strong></div>
+    <div class="toast-amount">${fmtMoney(sale.amount)} <span style="font-size:11px;color:#aaa">· ${sale.code}</span></div>
+  `;
+  tc.prepend(toast);
+
+  // limit visible toasts
+  if(tc.children.length > 4){
+    const old = tc.lastChild;
+    old.classList.add("out");
+    setTimeout(()=>old.remove(),400);
+  }
+
+  setTimeout(()=>{ toast.classList.add("out"); setTimeout(()=>toast.remove(),400); }, 5000);
+
+  // alerta visual en pantalla
+  mostrarAlertaMovil(sale);
+  // notificación real en barra del celular
+  enviarNotifNativa(sale);
+}
+
+// ─── AUTO TIMER ─────────────────────────────────────────────────────────────
+function getInterval(){ return parseInt(document.getElementById("intervalRange").value)*1000; }
+
+function startTimer(){
+  clearInterval(timerID);
+  timerID = setInterval(()=>{
+    if(running) addSale(generateSale());
+  }, getInterval());
+}
+
+document.getElementById("intervalRange").addEventListener("input", function(){
+  document.getElementById("intervalLabel").textContent = this.value + " s";
+  startTimer();
+});
+
+function toggleSales(){
+  running = !running;
+  const btn = document.getElementById("toggleBtn");
+  btn.textContent = running ? "⏸ Pausar ventas" : "▶ Reanudar ventas";
+  btn.style.background = running ? "#ff6900" : "#22c55e";
+}
+
+function resetStats(){
+  sales = []; totalRevenue = 0; hourlyData = new Array(8).fill(0);
+  PRODUCTS.forEach(p => productStats[p.name] = { units:0, rev:0 });
+  updateStats(); updateTable(); updateChart(); updateTopProducts();
+  document.getElementById("chart-total").textContent = "US$ 0";
+}
+
+// ─── DATE ───────────────────────────────────────────────────────────────────
+function setDate(){
+  const d = new Date();
+  const opts = { day:"numeric", month:"long", year:"numeric" };
+  document.getElementById("fecha-actual").textContent = d.toLocaleDateString("es-ES",opts);
+}
+
+// ─── EXPORT CSV ─────────────────────────────────────────────────────────────
+function exportCSV(){
+  const header = "Comprador,Email,Producto,Monto,Método,Código,Hora\n";
+  const rows = sales.map(s =>
+    `"${s.name}","${s.email}","${s.product.name}","${s.amount}","${s.method.label}","${s.code}","${s.time}"`
+  ).join("\n");
+  const blob = new Blob([header+rows],{type:"text/csv"});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url; a.download = "ventas_hotmart.csv"; a.click();
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+registrarSW();
+// Si ya tenía permiso, actualiza botón automáticamente sin necesidad de presionar
+document.addEventListener("DOMContentLoaded", ()=>{
+  const btn = document.getElementById("notif-btn");
+  if(!btn) return;
+  if(Notification.permission === "granted"){
+    btn.textContent = "🔔 Notificaciones ON";
+    btn.style.background = "#22c55e";
+  }
+});
+setDate();
+updateChart();
+updateTopProducts();
+
+// Add a few initial sales so dashboard isn't empty
+for(let i=0;i<5;i++) addSale(generateSale());
+
+startTimer();
+</script>
+</body>
+</html>
