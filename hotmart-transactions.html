@@ -290,12 +290,15 @@ td{padding:12px 14px;vertical-align:middle;color:#374151;}
     <div class="topbar-hamburger">
       <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </div>
-    <div class="hotmart-logo" style="cursor:default;">
-      <svg width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <div class="hotmart-logo" onclick="document.getElementById('logoUploadInput').click()" title="Clic para cambiar logo" style="cursor:pointer;">
+      <img id="logoImg" alt="Logo" height="36" style="object-fit:contain;display:none;max-width:120px;"/>
+      <svg id="logoDefault" width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M50 5C50 5 20 25 20 52C20 68 33 80 50 80C67 80 80 68 80 52C80 25 50 5 50 5Z" fill="#E8380D"/>
         <path d="M50 30C50 30 35 40 35 52C35 60 42 66 50 66C58 66 65 60 65 52C65 40 50 30 50 30Z" fill="white"/>
         <circle cx="50" cy="52" r="10" fill="#E8380D"/>
       </svg>
+    </div>
+    <input type="file" id="logoUploadInput" accept="image/*" style="display:none;" onchange="uploadLogo(this)"/>
       <span>hotmart</span>
     </div>
     <input type="file" id="logoUploadInput" accept="image/*" style="display:none;" onchange="uploadLogo(this)"/>
@@ -717,10 +720,12 @@ function uploadLogo(input) {
   const reader = new FileReader();
   reader.onload = function(e) {
     const img = document.getElementById('logoImg');
+    const def = document.getElementById('logoDefault');
     const placeholder = document.getElementById('logoPlaceholder');
     img.src = e.target.result;
     img.style.display = 'block';
-    placeholder.style.display = 'none';
+    if (def) def.style.display = 'none';
+    if (placeholder) placeholder.style.display = 'none';
     localStorage.setItem('hm_logo', e.target.result);
   };
   reader.readAsDataURL(file);
@@ -731,8 +736,10 @@ function uploadLogo(input) {
   const saved = localStorage.getItem('hm_logo');
   if (saved) {
     const img = document.getElementById('logoImg');
+    const def = document.getElementById('logoDefault');
     const placeholder = document.getElementById('logoPlaceholder');
     if (img) { img.src = saved; img.style.display='block'; }
+    if (def) def.style.display = 'none';
     if (placeholder) placeholder.style.display='none';
   }
 })();
